@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
+  import { goto } from '$app/navigation';
   
   let crew = {
     name: $page.params.crewname,
@@ -10,6 +11,14 @@
   };
   let loading = true;
   let error = null;
+  
+  // New variables for forms
+  let showAgentForm = false;
+  let showTaskForm = false;
+  let newAgentName = '';
+  let newTaskName = '';
+  let formSubmitting = false;
+  let successMessage = null;
   
   // Fetch crew data
   async function fetchCrewData() {
@@ -40,6 +49,78 @@
       console.error('Error fetching crew data:', err);
     } finally {
       loading = false;
+    }
+  }
+  
+  // Create new agent
+  async function createAgent(event) {
+    event.preventDefault();
+    formSubmitting = true;
+    
+    try {
+      // Prepare the data - just create with empty details
+      const currentAgents = { ...crew.agents };
+      currentAgents[newAgentName] = {};
+      
+      // Use the existing PUT endpoint
+      const response = await fetch(`/api/crew/${crew.name}/agents`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          agents: currentAgents
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create agent');
+      }
+      
+      // Navigate to the agent detail page
+      goto(`/crew/${crew.name}/agent/${newAgentName}`);
+      
+    } catch (err) {
+      error = err.message;
+      console.error('Error creating agent:', err);
+      formSubmitting = false;
+      showAgentForm = false;
+    }
+  }
+  
+  // Create new task
+  async function createTask(event) {
+    event.preventDefault();
+    formSubmitting = true;
+    
+    try {
+      // Prepare the data - just create with empty details
+      const currentTasks = { ...crew.tasks };
+      currentTasks[newTaskName] = {};
+      
+      // Use the existing PUT endpoint
+      const response = await fetch(`/api/crew/${crew.name}/tasks`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          tasks: currentTasks
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create task');
+      }
+      
+      // Navigate to the task detail page
+      goto(`/crew/${crew.name}/task/${newTaskName}`);
+      
+    } catch (err) {
+      error = err.message;
+      console.error('Error creating task:', err);
+      formSubmitting = false;
+      showTaskForm = false;
     }
   }
   
@@ -183,6 +264,15 @@
     <div class="two-column-layout">
       <section class="info-section">
         <h2>Agents</h2>
+        <div class="section-header">
+          <button class="add-button" on:click={() => showAgentForm = true}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add Agent
+          </button>
+        </div>
         {#if crew.agents && Object.keys(crew.agents).length > 0}
           <ul class="entity-list">
             {#each Object.keys(crew.agents) as agentName}
@@ -206,6 +296,15 @@
       
       <section class="info-section">
         <h2>Tasks</h2>
+        <div class="section-header">
+          <button class="add-button" on:click={() => showTaskForm = true}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add Task
+          </button>
+        </div>
         {#if crew.tasks && Object.keys(crew.tasks).length > 0}
           <ul class="entity-list">
             {#each Object.keys(crew.tasks) as taskName}
@@ -229,6 +328,96 @@
     </div>
   {/if}
 </main>
+
+<!-- Add these modal forms before the style tag -->
+
+{#if successMessage}
+  <div class="success-message">
+    {successMessage}
+  </div>
+{/if}
+
+{#if showAgentForm}
+  <div class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add New Agent</h3>
+        <button class="modal-close" on:click={() => showAgentForm = false}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <form on:submit={createAgent}>
+        <div class="form-group">
+          <label for="agentName">Agent Name <span class="required">*</span></label>
+          <input 
+            id="agentName" 
+            type="text" 
+            bind:value={newAgentName} 
+            placeholder="Enter agent name"
+            required
+            autofocus
+          />
+          <p class="form-help">Enter the agent name. You'll be able to edit details after creation.</p>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" on:click={() => showAgentForm = false}>Cancel</button>
+          <button type="submit" class="btn-primary" disabled={formSubmitting}>
+            {#if formSubmitting}
+              <span class="btn-spinner"></span>
+              Creating...
+            {:else}
+              Create Agent
+            {/if}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+{/if}
+
+{#if showTaskForm}
+  <div class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add New Task</h3>
+        <button class="modal-close" on:click={() => showTaskForm = false}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <form on:submit={createTask}>
+        <div class="form-group">
+          <label for="taskName">Task Name <span class="required">*</span></label>
+          <input 
+            id="taskName" 
+            type="text" 
+            bind:value={newTaskName} 
+            placeholder="Enter task name"
+            required
+            autofocus
+          />
+          <p class="form-help">Enter the task name. You'll be able to edit details after creation.</p>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" on:click={() => showTaskForm = false}>Cancel</button>
+          <button type="submit" class="btn-primary" disabled={formSubmitting}>
+            {#if formSubmitting}
+              <span class="btn-spinner"></span>
+              Creating...
+            {:else}
+              Create Task
+            {/if}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+{/if}
 
 <style>
   :global(body) {
@@ -660,5 +849,206 @@
       margin: 1rem 0;
       height: 30px;
     }
+  }
+  
+  /* Add this to the existing styles */
+  .section-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1.25rem;
+  }
+  
+  .add-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .add-button:hover {
+    background-color: #2563eb;
+  }
+  
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+  }
+  
+  .modal-content {
+    background-color: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    padding: 0;
+    overflow: hidden;
+  }
+  
+  .modal-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .modal-header h3 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: #0f172a;
+  }
+  
+  .modal-close {
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+  }
+  
+  .modal-close:hover {
+    background-color: #f1f5f9;
+    color: #334155;
+  }
+  
+  form {
+    padding: 1.5rem;
+  }
+  
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+  
+  label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: #334155;
+    font-size: 0.95rem;
+  }
+  
+  .required {
+    color: #ef4444;
+  }
+  
+  input, textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 1rem;
+    background-color: #f8fafc;
+    color: #0f172a;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  
+  input:focus, textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
+  
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  
+  .btn-primary, .btn-secondary {
+    padding: 0.75rem 1.25rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .btn-primary {
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+  }
+  
+  .btn-primary:hover:not(:disabled) {
+    background-color: #2563eb;
+  }
+  
+  .btn-primary:disabled {
+    background-color: #93c5fd;
+    cursor: not-allowed;
+  }
+  
+  .btn-secondary {
+    background-color: #f1f5f9;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+  }
+  
+  .btn-secondary:hover {
+    background-color: #e2e8f0;
+  }
+  
+  .btn-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s linear infinite;
+  }
+  
+  .success-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #22c55e;
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards;
+  }
+  
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+  
+  .form-help {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 0.5rem;
+    margin-bottom: 0;
   }
 </style>
