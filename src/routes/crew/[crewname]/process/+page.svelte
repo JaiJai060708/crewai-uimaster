@@ -8,7 +8,8 @@
   let process = {
     process: 'Hierarchical',
     agents: [],
-    tasks: []
+    tasks: [],
+    inputs: {}
   };
   
   let originalProcess = {};
@@ -47,6 +48,12 @@
       // Get agents and tasks from the crew structure
       process.agents = crewData.agents || [];
       process.tasks = crewData.tasks || [];
+      
+      // Initialize inputs object if not present
+      process.inputs = crewData.inputs || {};
+      
+      // Extract all input variables from tasks
+      await fetchTaskInputVariables();
       
       // Create a deep copy of the original process data
       originalProcess = JSON.parse(JSON.stringify(process));
@@ -95,6 +102,56 @@
     }
   }
   
+  // Extract input variables from all tasks
+  async function fetchTaskInputVariables() {
+    try {
+      const tasksResponse = await fetch(`/api/crew/${crewName}/tasks`);
+      if (!tasksResponse.ok) throw new Error('Failed to fetch crew tasks');
+      const tasksData = await tasksResponse.json();
+      
+      if (tasksData.tasks) {
+        const allInputs = {};
+        const inputSources = {};
+        
+        // Loop through all tasks to extract input variables
+        Object.entries(tasksData.tasks).forEach(([taskName, taskData]) => {
+          if (taskData.description) {
+            // Use regex to find all {variable} patterns
+            const matches = taskData.description.match(/\{([^{}]+)\}/g);
+            
+            if (matches) {
+              matches.forEach(match => {
+                // Remove the curly braces to get the variable name
+                const varName = match.substring(1, match.length - 1);
+                
+                // Add to inputs if not already present
+                if (!allInputs[varName]) {
+                  allInputs[varName] = process.inputs[varName] || '';
+                  
+                  // Track which task uses this input
+                  if (!inputSources[varName]) {
+                    inputSources[varName] = [];
+                  }
+                  if (!inputSources[varName].includes(taskName)) {
+                    inputSources[varName].push(taskName);
+                  }
+                }
+              });
+            }
+          }
+        });
+        
+        // Update process inputs
+        process.inputs = allInputs;
+        
+        // Store input sources for display
+        process.inputSources = inputSources;
+      }
+    } catch (err) {
+      console.error('Error fetching task input variables:', err);
+    }
+  }
+  
   // Save process data
   async function saveProcess() {
     loading = true;
@@ -108,7 +165,8 @@
           crew: {
             process: process.process.toLowerCase(),
             agents: process.agents,
-            tasks: process.tasks
+            tasks: process.tasks,
+            inputs: process.inputs
           }
         }
       };
@@ -389,6 +447,34 @@
             </div>
           </div>
           <div class="field-description">Select tasks and arrange them in the desired order</div>
+        </div>
+        
+        <div class="form-group">
+          <label>Input Variables</label>
+          <div class="input-variables-container">
+            {#if Object.keys(process.inputs).length === 0}
+              <div class="empty-list">No input variables found in task descriptions</div>
+            {:else}
+              <div class="input-variables-list">
+                {#each Object.entries(process.inputs) as [varName, value]}
+                  <div class="input-variable-item">
+                    <div class="input-variable-header">
+                      <span class="input-variable-name">{varName}</span>
+                      <div class="input-source-tasks">
+                        Used in: 
+                        {#each process.inputSources[varName] || [] as taskName, i}
+                          <a href="/crew/{crewName}/task/{taskName}">{taskName}</a>{i < (process.inputSources[varName].length - 1) ? ', ' : ''}
+                        {/each}
+                      </div>
+                    </div>
+                  </div>
+                {/each}
+              </div>
+            {/if}
+          </div>
+          <div class="field-description">
+            These input variables are found in your task descriptions. To edit their values, visit the individual task pages.
+          </div>
         </div>
       </section>
       
@@ -755,6 +841,73 @@
     box-shadow: none;
   }
   
+  .input-variables-container {
+    background-color: white;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+  }
+  
+  .input-variables-list {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .input-variable-item {
+    padding: 1rem;
+    background-color: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+  }
+  
+  .input-variable-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  
+  .input-variable-header label {
+    margin-bottom: 0;
+    color: #334155;
+    font-size: 0.95rem;
+  }
+  
+  .input-source-tasks {
+    font-size: 0.8rem;
+    color: #64748b;
+  }
+  
+  .input-source-tasks a {
+    color: #3b82f6;
+    text-decoration: none;
+  }
+  
+  .input-source-tasks a:hover {
+    text-decoration: underline;
+  }
+  
+  .input-variable-name {
+    font-weight: 600;
+    color: #334155;
+    font-size: 0.95rem;
+  }
+  
+  .input-variable-value {
+    background-color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    font-family: inherit;
+    font-size: 0.95rem;
+    min-height: 2.5rem;
+    display: flex;
+    align-items: center;
+  }
+  
   @media (max-width: 768px) {
     .container {
       padding: 1.5rem;
@@ -777,6 +930,12 @@
     .process-type-selector {
       flex-direction: column;
       gap: 1rem;
+    }
+    
+    .input-variable-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
     }
   }
 </style>

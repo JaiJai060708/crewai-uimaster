@@ -138,7 +138,33 @@
   // Check if changes were made
   $: hasChanges = JSON.stringify(agent) !== JSON.stringify(originalAgent);
   
-  onMount(fetchAgentData);
+  // Function to auto-resize textareas
+  function autoResizeTextarea(e) {
+    const textarea = e.target;
+    // Reset height to auto to get the correct scrollHeight
+    textarea.style.height = 'auto';
+    // Set the height to match the content
+    textarea.style.height = textarea.scrollHeight + 'px';
+  }
+  
+  // Initialize auto-resize for textareas after component mounts
+  function initTextareaResize() {
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach(textarea => {
+      // Set initial height
+      textarea.style.height = 'auto';
+      textarea.style.height = textarea.scrollHeight + 'px';
+      // Add input event listener
+      textarea.addEventListener('input', autoResizeTextarea);
+    });
+  }
+  
+  onMount(() => {
+    fetchAgentData().then(() => {
+      // Initialize textarea resize after data is loaded
+      setTimeout(initTextareaResize, 0);
+    });
+  });
 </script>
 
 <main class="container">
@@ -219,9 +245,10 @@
             bind:value={agent.goal}
             placeholder="Enter agent goal"
             rows="3"
+            on:input={autoResizeTextarea}
             required
           ></textarea>
-          <div class="field-description">The primary objective this agent is working to achieve</div>
+          <div class="field-description">What this agent aims to accomplish</div>
         </div>
         
         <div class="form-group">
@@ -230,10 +257,11 @@
             id="backstory" 
             bind:value={agent.backstory}
             placeholder="Enter agent backstory"
-            rows="5"
+            rows="4"
+            on:input={autoResizeTextarea}
             required
           ></textarea>
-          <div class="field-description">Background information and context for this agent</div>
+          <div class="field-description">Background information and personality traits</div>
         </div>
         
         <div class="form-group checkbox-group">
@@ -466,6 +494,19 @@
     background-color: white;
     transition: border-color 0.2s, box-shadow 0.2s;
     box-sizing: border-box;
+  }
+  
+  /* Specific styling for auto-expanding textareas */
+  textarea {
+    overflow-y: hidden; /* Hide scrollbar for auto-expanding textarea */
+    resize: none; /* Disable manual resizing since we're handling it with JS */
+    min-height: 100px; /* Set a minimum height */
+  }
+  
+  /* Keep role input at normal size */
+  input[type="text"]#role {
+    height: auto;
+    min-height: unset;
   }
   
   input[type="text"]:focus,

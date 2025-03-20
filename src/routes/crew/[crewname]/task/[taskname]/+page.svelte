@@ -197,7 +197,33 @@
   // Get a list of available agents that are not assigned to other tasks
   $: filteredAgents = availableAgents.filter(agent => isAgentAvailable(agent));
   
-  onMount(fetchData);
+  // Function to auto-resize textareas
+  function autoResizeTextarea(e) {
+    const textarea = e.target;
+    // Reset height to auto to get the correct scrollHeight
+    textarea.style.height = 'auto';
+    // Set the height to match the content
+    textarea.style.height = textarea.scrollHeight + 'px';
+  }
+  
+  // Initialize auto-resize for textareas after component mounts
+  function initTextareaResize() {
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach(textarea => {
+      // Set initial height
+      textarea.style.height = 'auto';
+      textarea.style.height = textarea.scrollHeight + 'px';
+      // Add input event listener
+      textarea.addEventListener('input', autoResizeTextarea);
+    });
+  }
+  
+  onMount(() => {
+    fetchData().then(() => {
+      // Initialize textarea resize after data is loaded
+      setTimeout(initTextareaResize, 0);
+    });
+  });
 </script>
 
 <main class="container">
@@ -266,6 +292,7 @@
             bind:value={task.description}
             placeholder="Enter task description"
             rows="4"
+            on:input={autoResizeTextarea}
             required
           ></textarea>
           <div class="field-description">Detailed instructions for completing this task</div>
@@ -278,6 +305,7 @@
             bind:value={task.expected_output}
             placeholder="Enter expected output"
             rows="3"
+            on:input={autoResizeTextarea}
             required
           ></textarea>
           <div class="field-description">The format and content expected as output from this task</div>
@@ -576,8 +604,18 @@
     box-sizing: border-box;
   }
   
+  /* Specific styling for auto-expanding textareas */
+  textarea {
+    overflow-y: hidden; /* Hide scrollbar for auto-expanding textarea */
+    resize: none; /* Disable manual resizing since we're handling it with JS */
+    min-height: 100px; /* Set a minimum height */
+  }
+  
+  /* Keep number of iterations input at normal size */
   input[type="number"] {
     width: 120px;
+    height: auto;
+    min-height: unset;
   }
   
   input[type="text"]:focus,
