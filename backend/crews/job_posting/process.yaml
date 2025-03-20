@@ -1,0 +1,11 @@
+crew:
+  process: >
+    Sequential
+  agents:
+    - research_agent
+    - writer_agent
+    - review_agent
+  tasks:
+    - research_task
+    - write_task
+    - review_task
