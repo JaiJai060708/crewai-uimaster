@@ -189,6 +189,19 @@
                     </svg>
                   </div>
                   <div class="agent-name" title={agentName}>{agentName}</div>
+                  
+                  <!-- Add associated tasks display -->
+                  <div class="agent-tasks">
+                    {#each Object.entries(crew.tasks).filter(([_, taskData]) => taskData.agents && taskData.agents.includes(agentName)) as [taskName, _]}
+                      <div class="task-badge" title={taskName}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M9 11l3 3L22 4"></path>
+                          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                        </svg>
+                        <span>{taskName}</span>
+                      </div>
+                    {/each}
+                  </div>
                 </div>
                 
                 {#if index < crew.process.crew.agents.length - 1}
@@ -226,6 +239,19 @@
                     </svg>
                   </div>
                   <div class="agent-name" title="Manager Agent">Manager Agent</div>
+                  
+                  <!-- Add associated tasks display for manager -->
+                  <div class="agent-tasks">
+                    {#each Object.entries(crew.tasks).filter(([_, taskData]) => taskData.agents && taskData.agents.includes("Manager Agent")) as [taskName, _]}
+                      <div class="task-badge" title={taskName}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M9 11l3 3L22 4"></path>
+                          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                        </svg>
+                        <span>{taskName}</span>
+                      </div>
+                    {/each}
+                  </div>
                 </div>
               </div>
               
@@ -247,6 +273,19 @@
                       </svg>
                     </div>
                     <div class="agent-name" title={agentName}>{agentName}</div>
+                    
+                    <!-- Add associated tasks display for worker -->
+                    <div class="agent-tasks">
+                      {#each Object.entries(crew.tasks).filter(([_, taskData]) => taskData.agents && taskData.agents.includes(agentName)) as [taskName, _]}
+                        <div class="task-badge" title={taskName}>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 11l3 3L22 4"></path>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                          </svg>
+                          <span>{taskName}</span>
+                        </div>
+                      {/each}
+                    </div>
                   </div>
                 {/each}
               </div>
@@ -1079,5 +1118,57 @@
   .edit-button:hover {
     background-color: #e2e8f0;
     color: #334155;
+  }
+  
+  /* Styles for agent tasks display */
+  .agent-tasks {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    max-width: 100%;
+  }
+  
+  .task-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    background-color: #dbeafe;
+    color: #1e40af;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 999px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    cursor: default;
+  }
+  
+  .task-badge span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Adjust agent node to accommodate tasks */
+  .agent-node {
+    min-width: 150px;
+    min-height: 120px;
+    padding: 1.5rem 1rem;
+  }
+  
+  @media (max-width: 768px) {
+    .task-badge {
+      font-size: 0.65rem;
+      padding: 0.2rem 0.4rem;
+    }
+    
+    .agent-tasks {
+      flex-direction: column;
+      align-items: center;
+    }
   }
 </style>

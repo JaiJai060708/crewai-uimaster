@@ -33,4 +33,5 @@ __pycache__
 venv
 
 # crews
+*.yaml
 backend/crews/*
