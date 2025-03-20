@@ -10,11 +10,12 @@
     description: '',
     expected_output: '',
     number_iterations: 1,
-    agents: []
+    agents: ''
   };
   
   let originalTask = {};
   let availableAgents = [];
+  let assignedAgents = {}; // Track which agents are assigned to which tasks
   let loading = true;
   let error = null;
   let saveSuccess = false;
@@ -34,6 +35,22 @@
         throw new Error(`Task "${taskName}" not found in crew "${crewName}"`);
       }
       
+      // Track which agents are already assigned to tasks
+      assignedAgents = {};
+      Object.entries(tasksData.tasks).forEach(([tName, tData]) => {
+        if (tName !== taskName && tData.agents) {
+          // If agents is still an array (backward compatibility)
+          if (Array.isArray(tData.agents)) {
+            tData.agents.forEach(agent => {
+              assignedAgents[agent] = tName;
+            });
+          } else if (tData.agents) {
+            // If agents is a string
+            assignedAgents[tData.agents] = tName;
+          }
+        }
+      });
+      
       // Set task data
       task = tasksData.tasks[taskName];
       
@@ -42,9 +59,14 @@
         task.number_iterations = 1;
       }
       
-      // If agents is not defined, set it to an empty array by default
+      // If agents is not defined or is an array, set it to empty string by default
       if (task.agents === undefined) {
-        task.agents = [];
+        task.agents = '';
+      } else if (Array.isArray(task.agents) && task.agents.length > 0) {
+        // Convert from array to string if needed (for backward compatibility)
+        task.agents = task.agents[0];
+      } else if (Array.isArray(task.agents)) {
+        task.agents = '';
       }
       
       // Fetch agents information for the crew to populate the dropdown
@@ -156,17 +178,24 @@
     }
   }
   
-  // Toggle agent selection
-  function toggleAgent(agentName) {
-    if (task.agents.includes(agentName)) {
-      task.agents = task.agents.filter(a => a !== agentName);
-    } else {
-      task.agents = [...task.agents, agentName];
-    }
+  // Replace toggleAgent with selectAgent
+  function selectAgent(agentName) {
+    task.agents = agentName;
   }
   
   // Check if changes were made
   $: hasChanges = JSON.stringify(task) !== JSON.stringify(originalTask);
+  
+  // Helper function to check if an agent is available
+  function isAgentAvailable(agentName) {
+    // Agent is available if: 
+    // 1. It's not assigned to any other task, or
+    // 2. It's already assigned to this task
+    return !assignedAgents[agentName] || (task.agents === agentName);
+  }
+  
+  // Get a list of available agents that are not assigned to other tasks
+  $: filteredAgents = availableAgents.filter(agent => isAgentAvailable(agent));
   
   onMount(fetchData);
 </script>
@@ -267,26 +296,62 @@
         </div>
         
         <div class="form-group">
-          <label>Assigned Agents</label>
+          <label>Assigned Agent</label>
           <div class="agents-selector">
             {#if availableAgents.length > 0}
-              {#each availableAgents as agentName}
-                <div class="agent-option">
-                  <label class="checkbox-label">
-                    <input 
-                      type="checkbox" 
-                      checked={task.agents.includes(agentName)}
-                      on:change={() => toggleAgent(agentName)}
-                    />
-                    <span class="checkbox-text">{agentName}</span>
-                  </label>
+              {#if filteredAgents.length > 0}
+                {#each filteredAgents as agentName}
+                  <div class="agent-option">
+                    <label class="radio-label">
+                      <input 
+                        type="radio" 
+                        name="agent"
+                        checked={task.agents === agentName}
+                        on:change={() => selectAgent(agentName)}
+                      />
+                      <span class="radio-text">{agentName}</span>
+                    </label>
+                  </div>
+                {/each}
+                {#if task.agents && !filteredAgents.includes(task.agents)}
+                  <div class="agent-option current-agent">
+                    <label class="radio-label">
+                      <input 
+                        type="radio" 
+                        name="agent"
+                        checked={true}
+                      />
+                      <span class="radio-text">{task.agents} (currently assigned)</span>
+                    </label>
+                  </div>
+                {/if}
+              {:else}
+                <div class="empty-agents">
+                  {#if task.agents}
+                    <p>Currently assigned: {task.agents}</p>
+                    <p>No other agents available - all are assigned to other tasks</p>
+                  {:else}
+                    <p>No agents available - all are assigned to other tasks</p>
+                  {/if}
                 </div>
-              {/each}
+              {/if}
             {:else}
               <div class="empty-agents">No agents available in this crew</div>
             {/if}
           </div>
-          <div class="field-description">Select which agents should perform this task</div>
+          <div class="field-description">
+            Select which agent should perform this task. Each agent can only be assigned to one task.
+            {#if Object.keys(assignedAgents).length > 0}
+              <div class="assigned-agents-info">
+                <p>Currently assigned agents:</p>
+                <ul>
+                  {#each Object.entries(assignedAgents) as [agent, taskName]}
+                    <li>{agent} - assigned to task: {taskName}</li>
+                  {/each}
+                </ul>
+              </div>
+            {/if}
+          </div>
         </div>
       </section>
       
@@ -555,49 +620,35 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   }
   
-  .checkbox-label {
+  .radio-label {
     display: flex;
     align-items: center;
     gap: 0.75rem;
     cursor: pointer;
   }
   
-  input[type="checkbox"] {
+  input[type="radio"] {
     appearance: none;
     width: 20px;
     height: 20px;
     border: 1px solid #cbd5e1;
-    border-radius: 4px;
+    border-radius: 50%;
     background-color: #f8fafc;
     cursor: pointer;
     transition: all 0.2s;
     position: relative;
   }
   
-  input[type="checkbox"]:checked {
-    background-color: #8b5cf6;
-    border-color: #8b5cf6;
+  input[type="radio"]:checked {
+    border: 5px solid #8b5cf6;
   }
   
-  input[type="checkbox"]:checked::after {
-    content: "";
-    position: absolute;
-    top: 2px;
-    left: 6px;
-    width: 6px;
-    height: 11px;
-    border: solid white;
-    border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
-  }
-  
-  input[type="checkbox"]:focus {
+  input[type="radio"]:focus {
     outline: none;
-    border-color: #8b5cf6;
     box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
   }
   
-  .checkbox-text {
+  .radio-text {
     font-weight: 500;
     color: #334155;
   }
@@ -679,5 +730,33 @@
     h1 {
       font-size: 2rem;
     }
+  }
+  
+  .current-agent {
+    background-color: #f0f9ff;
+    border-color: #bae6fd;
+  }
+  
+  .assigned-agents-info {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background-color: #f8fafc;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    font-size: 0.85rem;
+  }
+  
+  .assigned-agents-info p {
+    margin: 0 0 0.5rem 0;
+    font-weight: 500;
+  }
+  
+  .assigned-agents-info ul {
+    margin: 0;
+    padding-left: 1.5rem;
+  }
+  
+  .assigned-agents-info li {
+    margin-bottom: 0.25rem;
   }
 </style>
