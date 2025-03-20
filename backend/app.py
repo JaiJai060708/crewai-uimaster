@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 import os
 import yaml
+from crewai_helpers import run_crewai
 
 app = Flask(__name__)
 
@@ -205,6 +206,46 @@ def manage_crew(crew_name):
             })
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+        
+@app.route('/api/crew/<crew_name>/run', methods=['POST'], strict_slashes=False)
+def run_crew(crew_name):
+    crew_dir = os.path.join(os.path.dirname(__file__), 'crews', crew_name)
+    
+    if request.method == 'POST':
+        try:
+            # Read the process.yaml file
+            process_file = os.path.join(crew_dir, 'process.yaml')
+            if not os.path.exists(process_file):
+                return jsonify({"error": f"Process file not found for crew '{crew_name}'"}), 404
+                
+            with open(process_file, 'r') as f:
+                process_data = yaml.safe_load(f)
 
+            # Read the agents.yaml file
+            agents_file = os.path.join(crew_dir, 'agents.yaml')
+            if not os.path.exists(agents_file):
+                return jsonify({"error": f"Agents file not found for crew '{crew_name}'"}), 404
+                
+            with open(agents_file, 'r') as f:
+                agents_data = yaml.safe_load(f)
+
+            # Read the tasks.yaml file
+            tasks_file = os.path.join(crew_dir, 'tasks.yaml')
+            if not os.path.exists(tasks_file):
+                return jsonify({"error": f"Tasks file not found for crew '{crew_name}'"}), 404
+                
+            with open(tasks_file, 'r') as f:
+                tasks_data = yaml.safe_load(f)
+
+            # Get the input arguments from the request
+            input_args = request.json
+            print(input_args)
+
+            return run_crewai(process_data, agents_data, tasks_data, input_args)
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+                
+                
 if __name__ == '__main__':
     app.run(host='0.0.0.0',debug=True, port=5000)

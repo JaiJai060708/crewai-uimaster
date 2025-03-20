@@ -126,7 +126,8 @@
                 
                 // Add to inputs if not already present
                 if (!allInputs[varName]) {
-                  allInputs[varName] = process.inputs[varName] || '';
+                  // Don't use stored values, just initialize empty
+                  allInputs[varName] = '';
                   
                   // Track which task uses this input
                   if (!inputSources[varName]) {
@@ -141,7 +142,7 @@
           }
         });
         
-        // Update process inputs
+        // Update process inputs without referencing any stored values
         process.inputs = allInputs;
         
         // Store input sources for display
@@ -160,13 +161,14 @@
     
     try {
       // Prepare the data with correct format to match the crew structure in YAML
+      // Don't include inputs in the saved process
       const processData = {
         process: {
           crew: {
             process: process.process.toLowerCase(),
             agents: process.agents,
-            tasks: process.tasks,
-            inputs: process.inputs
+            tasks: process.tasks
+            // Inputs are not included here to avoid storing them
           }
         }
       };

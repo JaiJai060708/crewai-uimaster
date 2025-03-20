@@ -26,6 +26,12 @@
   async function createCrew() {
     if (!newCrewName.trim()) return;
     
+    // Validate crew name format - only allow letters, numbers, and underscores
+    if (!/^[a-zA-Z0-9_]+$/.test(newCrewName)) {
+      error = "Crew name can only contain letters, numbers, and underscores (_)";
+      return;
+    }
+    
     try {
       const response = await fetch(`/api/crew/${newCrewName}`, {
         method: 'POST',

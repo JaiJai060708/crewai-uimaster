@@ -55,6 +55,14 @@
   // Create new agent
   async function createAgent(event) {
     event.preventDefault();
+    
+    // Validate agent name format - only allow letters, numbers, and underscores
+    if (!/^[a-zA-Z0-9_]+$/.test(newAgentName)) {
+      error = "Agent name can only contain letters, numbers, and underscores (_)";
+      formSubmitting = false;
+      return;
+    }
+    
     formSubmitting = true;
     
     try {
@@ -91,6 +99,14 @@
   // Create new task
   async function createTask(event) {
     event.preventDefault();
+    
+    // Validate task name format - only allow letters, numbers, and underscores
+    if (!/^[a-zA-Z0-9_]+$/.test(newTaskName)) {
+      error = "Task name can only contain letters, numbers, and underscores (_)";
+      formSubmitting = false;
+      return;
+    }
+    
     formSubmitting = true;
     
     try {
