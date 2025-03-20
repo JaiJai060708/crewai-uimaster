@@ -1,0 +1,656 @@
+<script>
+  import { onMount } from 'svelte';
+  import { page } from '$app/stores';
+  import { goto } from '$app/navigation';
+  
+  let crewName = $page.params.crewname;
+  let taskName = $page.params.taskname;
+  
+  let task = {
+    description: '',
+    expected_output: '',
+    number_iterations: 1,
+    agents: []
+  };
+  
+  let originalTask = {};
+  let availableAgents = [];
+  let loading = true;
+  let error = null;
+  let saveSuccess = false;
+  
+  // Fetch task data and available agents
+  async function fetchData() {
+    loading = true;
+    error = null;
+    
+    try {
+      // Fetch tasks information for the crew
+      const tasksResponse = await fetch(`/api/crew/${crewName}/tasks`);
+      if (!tasksResponse.ok) throw new Error('Failed to fetch crew tasks');
+      const tasksData = await tasksResponse.json();
+      
+      if (!tasksData.tasks || !tasksData.tasks[taskName]) {
+        throw new Error(`Task "${taskName}" not found in crew "${crewName}"`);
+      }
+      
+      // Set task data
+      task = tasksData.tasks[taskName];
+      
+      // If number_iterations is not defined, set it to 1 by default
+      if (task.number_iterations === undefined) {
+        task.number_iterations = 1;
+      }
+      
+      // If agents is not defined, set it to an empty array by default
+      if (task.agents === undefined) {
+        task.agents = [];
+      }
+      
+      // Fetch agents information for the crew to populate the dropdown
+      const agentsResponse = await fetch(`/api/crew/${crewName}/agents`);
+      if (!agentsResponse.ok) throw new Error('Failed to fetch crew agents');
+      const agentsData = await agentsResponse.json();
+      
+      if (agentsData.agents) {
+        availableAgents = Object.keys(agentsData.agents);
+      }
+      
+      // Create a deep copy of the original task data
+      originalTask = JSON.parse(JSON.stringify(task));
+      
+    } catch (err) {
+      error = err.message;
+      console.error('Error fetching data:', err);
+    } finally {
+      loading = false;
+    }
+  }
+  
+  // Save task data
+  async function saveTask() {
+    loading = true;
+    error = null;
+    saveSuccess = false;
+    
+    try {
+      // Validate number of iterations
+      if (task.number_iterations < 1) {
+        throw new Error('Number of iterations must be at least 1');
+      }
+      
+      // Fetch all tasks first
+      const tasksResponse = await fetch(`/api/crew/${crewName}/tasks`);
+      if (!tasksResponse.ok) throw new Error('Failed to fetch crew tasks');
+      const tasksData = await tasksResponse.json();
+      
+      // Update the specific task
+      const updatedTasks = { ...tasksData.tasks };
+      updatedTasks[taskName] = task;
+      
+      // Save the updated tasks data
+      const saveResponse = await fetch(`/api/crew/${crewName}/tasks`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ tasks: updatedTasks })
+      });
+      
+      if (!saveResponse.ok) throw new Error('Failed to save task data');
+      
+      // Update the original task data after successful save
+      originalTask = JSON.parse(JSON.stringify(task));
+      saveSuccess = true;
+      
+      // Hide success message after 3 seconds
+      setTimeout(() => {
+        saveSuccess = false;
+      }, 3000);
+      
+    } catch (err) {
+      error = err.message;
+      console.error('Error saving task data:', err);
+    } finally {
+      loading = false;
+    }
+  }
+  
+  // Delete task
+  async function deleteTask() {
+    if (!confirm(`Are you sure you want to delete the task "${taskName}"?`)) {
+      return;
+    }
+    
+    loading = true;
+    error = null;
+    
+    try {
+      // Fetch all tasks first
+      const tasksResponse = await fetch(`/api/crew/${crewName}/tasks`);
+      if (!tasksResponse.ok) throw new Error('Failed to fetch crew tasks');
+      const tasksData = await tasksResponse.json();
+      
+      // Remove the specific task
+      const updatedTasks = { ...tasksData.tasks };
+      delete updatedTasks[taskName];
+      
+      // Save the updated tasks data
+      const saveResponse = await fetch(`/api/crew/${crewName}/tasks`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ tasks: updatedTasks })
+      });
+      
+      if (!saveResponse.ok) throw new Error('Failed to delete task');
+      
+      // Navigate back to the crew page
+      goto(`/crew/${crewName}`);
+      
+    } catch (err) {
+      error = err.message;
+      console.error('Error deleting task:', err);
+      loading = false;
+    }
+  }
+  
+  // Toggle agent selection
+  function toggleAgent(agentName) {
+    if (task.agents.includes(agentName)) {
+      task.agents = task.agents.filter(a => a !== agentName);
+    } else {
+      task.agents = [...task.agents, agentName];
+    }
+  }
+  
+  // Check if changes were made
+  $: hasChanges = JSON.stringify(task) !== JSON.stringify(originalTask);
+  
+  onMount(fetchData);
+</script>
+
+<main class="container">
+  <header class="task-header">
+    <div class="title-section">
+      <h1>{taskName}</h1>
+      <div class="task-crew">
+        From crew: <a href="/crew/{crewName}">{crewName}</a>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="delete-btn" on:click={deleteTask} disabled={loading}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18"></path>
+          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+        </svg>
+        Delete Task
+      </button>
+      <a href="/crew/{crewName}" class="back-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Back to Crew
+      </a>
+    </div>
+  </header>
+  
+  {#if error}
+    <div class="alert">
+      <p>{error}</p>
+      <button class="alert-dismiss" on:click={() => error = null}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  {/if}
+  
+  {#if saveSuccess}
+    <div class="success-alert">
+      <p>Task saved successfully!</p>
+      <button class="alert-dismiss" on:click={() => saveSuccess = false}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  {/if}
+  
+  {#if loading}
+    <div class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Loading task data...</p>
+    </div>
+  {:else}
+    <form on:submit|preventDefault={saveTask} class="task-form">
+      <section class="form-section">
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea 
+            id="description" 
+            bind:value={task.description}
+            placeholder="Enter task description"
+            rows="4"
+            required
+          ></textarea>
+          <div class="field-description">Detailed instructions for completing this task</div>
+        </div>
+        
+        <div class="form-group">
+          <label for="expected_output">Expected Output</label>
+          <textarea 
+            id="expected_output" 
+            bind:value={task.expected_output}
+            placeholder="Enter expected output"
+            rows="3"
+            required
+          ></textarea>
+          <div class="field-description">The format and content expected as output from this task</div>
+        </div>
+        
+        <div class="form-group">
+          <label for="number_iterations">Number of Iterations</label>
+          <input 
+            type="number" 
+            id="number_iterations" 
+            bind:value={task.number_iterations}
+            min="1"
+            required
+          />
+          <div class="field-description">How many times this task should be repeated (minimum 1)</div>
+        </div>
+        
+        <div class="form-group">
+          <label>Assigned Agents</label>
+          <div class="agents-selector">
+            {#if availableAgents.length > 0}
+              {#each availableAgents as agentName}
+                <div class="agent-option">
+                  <label class="checkbox-label">
+                    <input 
+                      type="checkbox" 
+                      checked={task.agents.includes(agentName)}
+                      on:change={() => toggleAgent(agentName)}
+                    />
+                    <span class="checkbox-text">{agentName}</span>
+                  </label>
+                </div>
+              {/each}
+            {:else}
+              <div class="empty-agents">No agents available in this crew</div>
+            {/if}
+          </div>
+          <div class="field-description">Select which agents should perform this task</div>
+        </div>
+      </section>
+      
+      <div class="form-actions">
+        <button type="submit" class="save-btn" disabled={loading || !hasChanges}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+          </svg>
+          Save Changes
+        </button>
+      </div>
+    </form>
+  {/if}
+</main>
+
+<style>
+  :global(body) {
+    background-color: #f8fafc;
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    color: #1e293b;
+  }
+  
+  .container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+  
+  .task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2.5rem;
+  }
+  
+  .title-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+  
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.025em;
+    margin: 0;
+  }
+  
+  .task-crew {
+    font-size: 0.95rem;
+    color: #64748b;
+  }
+  
+  .task-crew a {
+    color: #3b82f6;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  
+  .task-crew a:hover {
+    text-decoration: underline;
+  }
+  
+  .back-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #64748b;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    background-color: white;
+  }
+  
+  .back-link:hover {
+    color: #3b82f6;
+    border-color: #bfdbfe;
+    background-color: #f8fafc;
+  }
+  
+  .delete-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #ef4444;
+    background-color: white;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .delete-btn:hover {
+    background-color: #fee2e2;
+    border-color: #ef4444;
+  }
+  
+  .delete-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  .alert {
+    background-color: rgba(245, 101, 101, 0.1);
+    color: #ef4444;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid #ef4444;
+  }
+  
+  .success-alert {
+    background-color: rgba(110, 231, 183, 0.1);
+    color: #10b981;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid #10b981;
+  }
+  
+  .alert-dismiss {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 0;
+    color: #64748b;
+  }
+  
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(59, 130, 246, 0.2);
+    border-radius: 50%;
+    border-top-color: #3b82f6;
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 1rem;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  .form-section {
+    background-color: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    border-top: 4px solid #8b5cf6;
+  }
+  
+  .form-group {
+    margin-bottom: 2rem;
+  }
+  
+  .form-group:last-child {
+    margin-bottom: 0;
+  }
+  
+  label {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    color: #0f172a;
+    font-size: 1rem;
+  }
+  
+  input[type="text"],
+  input[type="number"],
+  textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    font-family: inherit;
+    font-size: 1rem;
+    color: #334155;
+    background-color: #f8fafc;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  
+  input[type="number"] {
+    width: 120px;
+  }
+  
+  input[type="text"]:focus,
+  input[type="number"]:focus,
+  textarea:focus {
+    outline: none;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+  }
+  
+  .field-description {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: #64748b;
+    line-height: 1.4;
+  }
+  
+  .agents-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    background-color: #f8fafc;
+    border-radius: 6px;
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 0.5rem;
+  }
+  
+  .agent-option {
+    background-color: white;
+    border-radius: 6px;
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s;
+  }
+  
+  .agent-option:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  }
+  
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+  }
+  
+  input[type="checkbox"] {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    background-color: #f8fafc;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  
+  input[type="checkbox"]:checked {
+    background-color: #8b5cf6;
+    border-color: #8b5cf6;
+  }
+  
+  input[type="checkbox"]:checked::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 6px;
+    width: 6px;
+    height: 11px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  
+  input[type="checkbox"]:focus {
+    outline: none;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+  }
+  
+  .checkbox-text {
+    font-weight: 500;
+    color: #334155;
+  }
+  
+  .empty-agents {
+    grid-column: 1 / -1;
+    padding: 1rem;
+    text-align: center;
+    color: #64748b;
+    font-style: italic;
+  }
+  
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+  
+  .save-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background-color: #8b5cf6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+  }
+  
+  .save-btn:hover {
+    background-color: #7c3aed;
+  }
+  
+  .save-btn:disabled {
+    background-color: #94a3b8;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  
+  @media (max-width: 768px) {
+    .container {
+      padding: 1.5rem;
+    }
+    
+    .task-header {
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    
+    .actions {
+      width: 100%;
+      justify-content: space-between;
+    }
+    
+    .form-section {
+      padding: 1.5rem;
+    }
+    
+    .agents-selector {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

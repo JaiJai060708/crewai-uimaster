@@ -105,7 +105,7 @@
                       <circle cx="12" cy="7" r="4"></circle>
                     </svg>
                   </div>
-                  <div class="agent-name">{agentName}</div>
+                  <div class="agent-name" title={agentName}>{agentName}</div>
                 </div>
                 
                 {#if index < crew.process.crew.agents.length - 1}
@@ -142,7 +142,7 @@
                       <circle cx="12" cy="7" r="4"></circle>
                     </svg>
                   </div>
-                  <div class="agent-name">{crew.process.crew.agents[0]}</div>
+                  <div class="agent-name" title={crew.process.crew.agents[0]}>{crew.process.crew.agents[0]}</div>
                 </div>
               </div>
               
@@ -163,7 +163,7 @@
                         <circle cx="12" cy="7" r="4"></circle>
                       </svg>
                     </div>
-                    <div class="agent-name">{agentName}</div>
+                    <div class="agent-name" title={agentName}>{agentName}</div>
                   </div>
                 {/each}
               </div>
@@ -187,7 +187,7 @@
           <ul class="entity-list">
             {#each Object.keys(crew.agents) as agentName}
               <li class="entity-card">
-                <a href="/crew/{crew.name}/agent/{agentName}" class="entity-link">
+                <a href="/crew/{crew.name}/agent/{agentName}" class="entity-link" title={agentName}>
                   <div class="entity-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -210,13 +210,15 @@
           <ul class="entity-list">
             {#each Object.keys(crew.tasks) as taskName}
               <li class="entity-card">
-                <div class="entity-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M9 11l3 3L22 4"></path>
-                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                  </svg>
-                </div>
-                <span class="entity-name">{taskName}</span>
+                <a href="/crew/{crew.name}/task/{taskName}" class="entity-link" title={taskName}>
+                  <div class="entity-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M9 11l3 3L22 4"></path>
+                      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    </svg>
+                  </div>
+                  <span class="entity-name">{taskName}</span>
+                </a>
               </li>
             {/each}
           </ul>
@@ -371,6 +373,7 @@
     border-radius: 8px;
     border: 1px solid #e2e8f0;
     transition: transform 0.15s, box-shadow 0.15s;
+    width: 100%;
   }
   
   .entity-card:hover {
@@ -389,10 +392,24 @@
     color: #0284c7;
   }
   
+  .entity-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    color: inherit;
+    width: 100%;
+    overflow: hidden;
+  }
+  
   .entity-name {
     font-weight: 500;
     font-size: 0.95rem;
     color: #334155;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: calc(100% - 40px);
   }
   
   .loading-container {
@@ -520,6 +537,13 @@
     font-size: 1rem;
     text-align: center;
     color: #334155;
+    word-break: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
   }
   
   .connector {
@@ -636,14 +660,5 @@
       margin: 1rem 0;
       height: 30px;
     }
-  }
-  
-  .entity-link {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    text-decoration: none;
-    color: inherit;
-    width: 100%;
   }
 </style>
