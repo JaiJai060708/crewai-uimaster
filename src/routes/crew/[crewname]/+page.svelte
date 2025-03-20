@@ -157,13 +157,6 @@
       <p>Loading crew data...</p>
     </div>
   {:else}
-    <section class="info-section">
-      <h2>Process Type</h2>
-      <div class="process-badge {crew.process?.crew?.process?.toLowerCase() || 'unknown'}">
-        {crew.process?.crew?.process || 'Not defined'}
-      </div>
-    </section>
-    
     <section class="workflow-section">
       <h2>Workflow</h2>
       
@@ -223,7 +216,7 @@
                       <circle cx="12" cy="7" r="4"></circle>
                     </svg>
                   </div>
-                  <div class="agent-name" title={crew.process.crew.agents[0]}>{crew.process.crew.agents[0]}</div>
+                  <div class="agent-name" title="Manager Agent">Manager Agent</div>
                 </div>
               </div>
               
@@ -235,7 +228,7 @@
               </div>
               
               <div class="workers-tier">
-                {#each crew.process.crew.agents.slice(1) as agentName, index}
+                {#each crew.process.crew.agents as agentName, index}
                   <div class="agent-node worker">
                     <div class="role-label">Worker</div>
                     <div class="agent-icon">

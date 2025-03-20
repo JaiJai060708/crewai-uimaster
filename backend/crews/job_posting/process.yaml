@@ -1,6 +1,5 @@
 crew:
-  process: >
-    Sequential
+  process: Hierarchical
   agents:
     - research_agent
     - writer_agent
