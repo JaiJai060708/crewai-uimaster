@@ -158,7 +158,16 @@
     </div>
   {:else}
     <section class="workflow-section">
-      <h2>Workflow</h2>
+      <div class="section-header">
+        <h2>Workflow</h2>
+        <a href="/crew/{crew.name}/process" class="edit-button">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          Edit Workflow
+        </a>
+      </div>
       
       {#if crew.process?.crew?.process?.toLowerCase() === 'sequential'}
         <div class="sequential-workflow">
@@ -542,36 +551,26 @@
     list-style-type: none;
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 2rem;
+    width: 100%;
   }
   
   .entity-card {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 1rem;
+    padding: 0.75rem;
     background-color: #f8fafc;
     border-radius: 8px;
     border: 1px solid #e2e8f0;
     transition: transform 0.15s, box-shadow 0.15s;
     width: 100%;
+    height: 100%;
   }
   
   .entity-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  }
-  
-  .entity-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    background-color: #e0f2fe;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #0284c7;
   }
   
   .entity-link {
@@ -584,14 +583,26 @@
     overflow: hidden;
   }
   
+  .entity-icon {
+    min-width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background-color: #e0f2fe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0284c7;
+    flex-shrink: 0;
+  }
+  
   .entity-name {
     font-weight: 500;
-    font-size: 0.95rem;
+    font-size: 0.875rem;
     color: #334155;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: calc(100% - 40px);
+    max-width: 100%;
   }
   
   .loading-container {
@@ -842,12 +853,17 @@
       margin: 1rem 0;
       height: 30px;
     }
+    
+    .entity-list {
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    }
   }
   
   /* Add this to the existing styles */
   .section-header {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 1.25rem;
   }
   
@@ -1043,5 +1059,25 @@
     color: #64748b;
     margin-top: 0.5rem;
     margin-bottom: 0;
+  }
+  
+  .edit-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 0.2s, color 0.2s;
+  }
+  
+  .edit-button:hover {
+    background-color: #e2e8f0;
+    color: #334155;
   }
 </style>

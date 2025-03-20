@@ -1,10 +1,8 @@
 crew:
-  process: Hierarchical
   agents:
-    - research_agent
-    - writer_agent
-    - review_agent
+  - research_agent
+  - writer_agent
+  process: hierarchical
   tasks:
-    - research_task
-    - write_task
-    - review_task
+  - industry_analysis_task
+  - research_company_culture_task

@@ -465,18 +465,27 @@
   .form-section {
     background-color: white;
     border-radius: 12px;
-    padding: 2rem;
+    padding: 2.5rem;
     margin-bottom: 2rem;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     border-top: 4px solid #8b5cf6;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .form-group {
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem;
+    width: 100%;
+    padding: 1rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    background-color: #f8fafc;
+    border-radius: 8px;
   }
   
   .form-group:last-child {
     margin-bottom: 0;
+    border-bottom: none;
   }
   
   label {
@@ -491,14 +500,15 @@
   input[type="number"],
   textarea {
     width: 100%;
-    padding: 0.75rem 1rem;
+    padding: 0.85rem 1.2rem;
     border-radius: 6px;
     border: 1px solid #cbd5e1;
     font-family: inherit;
     font-size: 1rem;
     color: #334155;
-    background-color: #f8fafc;
+    background-color: white;
     transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
   }
   
   input[type="number"] {
@@ -514,17 +524,18 @@
   }
   
   .field-description {
-    margin-top: 0.5rem;
+    margin-top: 0.75rem;
     font-size: 0.85rem;
     color: #64748b;
     line-height: 1.4;
+    padding-bottom: 0.5rem;
   }
   
   .agents-selector {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 1rem;
-    background-color: #f8fafc;
+    background-color: white;
     border-radius: 6px;
     padding: 1rem;
     border: 1px solid #e2e8f0;
@@ -532,7 +543,7 @@
   }
   
   .agent-option {
-    background-color: white;
+    background-color: #f8fafc;
     border-radius: 6px;
     padding: 0.75rem;
     border: 1px solid #e2e8f0;
@@ -630,14 +641,21 @@
     box-shadow: none;
   }
   
+  .task-form {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
   @media (max-width: 768px) {
     .container {
-      padding: 1.5rem;
+      padding: 1rem;
     }
     
     .task-header {
       flex-direction: column;
       gap: 1.5rem;
+      margin-bottom: 1.5rem;
     }
     
     .actions {
@@ -649,8 +667,17 @@
       padding: 1.5rem;
     }
     
+    .form-group {
+      padding: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    
     .agents-selector {
       grid-template-columns: 1fr;
+    }
+    
+    h1 {
+      font-size: 2rem;
     }
   }
 </style>

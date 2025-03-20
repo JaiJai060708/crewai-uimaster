@@ -1,4 +1,6 @@
 draft_job_posting_task:
+  agents:
+  - research_agent
   description: 'Draft a job posting for the role described by the hiring manager:
     {hiring_needs}. Use the insights on {company_description} to start with a compelling
     introduction, followed by a detailed role description, responsibilities, and required
@@ -13,6 +15,7 @@ draft_job_posting_task:
     the right candidates.
 
     '
+  number_iterations: 1
 industry_analysis_task:
   description: 'Conduct an in-depth analysis of the industry related to the company''s
     domain {company_domain}. Investigate current trends, challenges, and opportunities
