@@ -190,6 +190,30 @@
                   </div>
                   <div class="agent-name" title={agentName}>{agentName}</div>
                   
+                  <!-- Add delegation indicator badge if agent can delegate -->
+                  {#if crew.agents[agentName]?.allow_delegation}
+                    <div class="delegation-badge" title="Can delegate to previous agents">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                      </svg>
+                      <span>Delegator</span>
+                    </div>
+                    
+                    <!-- Show delegation arrows to previous agents -->
+                    {#if index > 0}
+                      <div class="delegation-arrows sequential">
+                        {#each Array(index) as _, i}
+                          <div class="delegation-arrow" style="--arrow-distance: {(index - i) * 20}px">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M7 13l5 5 5-5M7 6l5 5 5-5"/>
+                            </svg>
+                          </div>
+                        {/each}
+                      </div>
+                    {/if}
+                  {/if}
+                  
                   <!-- Add associated tasks display -->
                   <div class="agent-tasks">
                     {#each Object.entries(crew.tasks).filter(([_, taskData]) => taskData.agents && taskData.agents.includes(agentName)) as [taskName, _]}
@@ -240,6 +264,20 @@
                   </div>
                   <div class="agent-name" title="Manager Agent">Manager Agent</div>
                   
+                  <!-- Add delegation indicator badge if manager can delegate -->
+                  {#if crew.agents["Manager Agent"]?.allow_delegation}
+                    <div class="delegation-badge hierarchical" title="Can delegate to all workers">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                      </svg>
+                      <span>Delegator</span>
+                    </div>
+                    
+                    <!-- Add pulsing delegation aura for manager -->
+                    <div class="delegation-aura"></div>
+                  {/if}
+                  
                   <!-- Add associated tasks display for manager -->
                   <div class="agent-tasks">
                     {#each Object.entries(crew.tasks).filter(([_, taskData]) => taskData.agents && taskData.agents.includes("Manager Agent")) as [taskName, _]}
@@ -273,6 +311,20 @@
                       </svg>
                     </div>
                     <div class="agent-name" title={agentName}>{agentName}</div>
+                    
+                    <!-- Add delegation indicator badge if worker can delegate -->
+                    {#if crew.agents[agentName]?.allow_delegation}
+                      <div class="delegation-badge worker" title="Can delegate to other workers">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <span>Delegator</span>
+                      </div>
+                      
+                      <!-- Add pulsing delegation aura for workers who can delegate -->
+                      <div class="delegation-aura worker"></div>
+                    {/if}
                     
                     <!-- Add associated tasks display for worker -->
                     <div class="agent-tasks">
@@ -1169,6 +1221,125 @@
     .agent-tasks {
       flex-direction: column;
       align-items: center;
+    }
+  }
+  
+  /* Delegation indicator styling */
+  .delegation-badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    background-color: #f59e0b;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 999px;
+    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+    z-index: 10;
+  }
+  
+  .delegation-badge.hierarchical {
+    background-color: #8b5cf6;
+    box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+  }
+  
+  .delegation-badge.worker {
+    background-color: #10b981;
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+  }
+  
+  /* Pulsing aura effect for delegators in hierarchical workflow */
+  .delegation-aura {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 12px;
+    z-index: -1;
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2);
+    animation: pulse 2s infinite;
+  }
+  
+  .delegation-aura.worker {
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+  }
+  
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(139, 92, 246, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+    }
+  }
+  
+  /* Delegation arrows for sequential workflow */
+  .delegation-arrows.sequential {
+    position: absolute;
+    left: 50%;
+    bottom: -20px;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    z-index: 5;
+  }
+  
+  .delegation-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #f59e0b;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    padding: 2px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transform: translateY(var(--arrow-distance));
+    transition: transform 0.3s ease;
+  }
+  
+  /* Enhance agent node for delegation features */
+  .agent-node {
+    position: relative;
+    /* ... existing agent-node styles ... */
+  }
+  
+  /* Agent node hover effect with delegation arrows */
+  .agent-node:hover .delegation-arrow {
+    transform: translateY(0);
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .delegation-badge {
+      font-size: 0.65rem;
+      padding: 0.2rem 0.4rem;
+      right: -5px;
+      top: -5px;
+    }
+    
+    .delegation-arrows.sequential {
+      flex-direction: column;
+      bottom: auto;
+      left: -15px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    
+    .delegation-arrow {
+      transform: translateX(var(--arrow-distance));
+    }
+    
+    .agent-node:hover .delegation-arrow {
+      transform: translateX(0);
     }
   }
 </style>
