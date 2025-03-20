@@ -187,13 +187,15 @@
           <ul class="entity-list">
             {#each Object.keys(crew.agents) as agentName}
               <li class="entity-card">
-                <div class="entity-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                  </svg>
-                </div>
-                <span class="entity-name">{agentName}</span>
+                <a href="/crew/{crew.name}/agent/{agentName}" class="entity-link">
+                  <div class="entity-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  </div>
+                  <span class="entity-name">{agentName}</span>
+                </a>
               </li>
             {/each}
           </ul>
@@ -634,5 +636,14 @@
       margin: 1rem 0;
       height: 30px;
     }
+  }
+  
+  .entity-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+    color: inherit;
+    width: 100%;
   }
 </style>
