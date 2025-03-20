@@ -1,7 +1,11 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
 import os
 import yaml
 from crewai_helpers import run_crewai
+import queue
+import threading
+import json
+from contextlib import redirect_stdout
 
 app = Flask(__name__)
 
@@ -207,45 +211,86 @@ def manage_crew(crew_name):
         except Exception as e:
             return jsonify({"error": str(e)}), 500
         
+
+
 @app.route('/api/crew/<crew_name>/run', methods=['POST'], strict_slashes=False)
 def run_crew(crew_name):
     crew_dir = os.path.join(os.path.dirname(__file__), 'crews', crew_name)
-    
-    if request.method == 'POST':
-        try:
-            # Read the process.yaml file
-            process_file = os.path.join(crew_dir, 'process.yaml')
-            if not os.path.exists(process_file):
-                return jsonify({"error": f"Process file not found for crew '{crew_name}'"}), 404
-                
-            with open(process_file, 'r') as f:
-                process_data = yaml.safe_load(f)
 
-            # Read the agents.yaml file
-            agents_file = os.path.join(crew_dir, 'agents.yaml')
-            if not os.path.exists(agents_file):
-                return jsonify({"error": f"Agents file not found for crew '{crew_name}'"}), 404
-                
-            with open(agents_file, 'r') as f:
-                agents_data = yaml.safe_load(f)
+    try:
+        # Load process.yaml
+        process_file = os.path.join(crew_dir, 'process.yaml')
+        if not os.path.exists(process_file):
+            return jsonify({"error": f"Process file not found for crew '{crew_name}'"}), 404
+        with open(process_file, 'r') as f:
+            process_data = yaml.safe_load(f)
 
-            # Read the tasks.yaml file
-            tasks_file = os.path.join(crew_dir, 'tasks.yaml')
-            if not os.path.exists(tasks_file):
-                return jsonify({"error": f"Tasks file not found for crew '{crew_name}'"}), 404
-                
-            with open(tasks_file, 'r') as f:
-                tasks_data = yaml.safe_load(f)
+        # Load agents.yaml
+        agents_file = os.path.join(crew_dir, 'agents.yaml')
+        if not os.path.exists(agents_file):
+            return jsonify({"error": f"Agents file not found for crew '{crew_name}'"}), 404
+        with open(agents_file, 'r') as f:
+            agents_data = yaml.safe_load(f)
 
-            # Get the input arguments from the request
-            input_args = request.json
-            print(input_args)
+        # Load tasks.yaml
+        tasks_file = os.path.join(crew_dir, 'tasks.yaml')
+        if not os.path.exists(tasks_file):
+            return jsonify({"error": f"Tasks file not found for crew '{crew_name}'"}), 404
+        with open(tasks_file, 'r') as f:
+            tasks_data = yaml.safe_load(f)
 
-            return run_crewai(process_data, agents_data, tasks_data, input_args)
+        # Get input arguments from the request
+        input_args = request.json or {}
 
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
-                
-                
+        # Create the Crew object
+        result = run_crewai(process_data, agents_data, tasks_data, input_args)
+        if isinstance(result, dict) and "error" in result:
+            return jsonify(result), 400
+        crew = result
+
+        # Set up logging queue and stream
+        log_queue = queue.Queue()
+
+        class LogStream:
+            def __init__(self, queue):
+                self.queue = queue
+
+            def write(self, message):
+                if message.strip():  # Ignore empty lines
+                    self.queue.put({"type": "log", "message": message.strip()})
+
+            def flush(self):
+                pass
+
+        log_stream = LogStream(log_queue)
+
+        # Function to run crew.kickoff in a thread
+        def run_kickoff():
+            with redirect_stdout(log_stream):
+                try:
+                    result = crew.kickoff(inputs=input_args)
+                    log_queue.put({"type": "final_result", "result": str(result)})
+                except Exception as e:
+                    log_queue.put({"type": "error", "message": str(e)})
+
+        # Start the kickoff in a separate thread
+        thread = threading.Thread(target=run_kickoff)
+        thread.start()
+
+        # Generator to stream logs
+        def generate():
+            while thread.is_alive() or not log_queue.empty():
+                try:
+                    message = log_queue.get(timeout=1)  # Short timeout to check thread status
+                    yield json.dumps(message) + "\n"
+                except queue.Empty:
+                    continue  # Keep checking if thread is alive
+
+        # Return streaming response
+        return Response(generate(), mimetype='application/x-ndjson')
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',debug=True, port=5000)
+    app.run(host='0.0.0.0', debug=True, port=5000)
