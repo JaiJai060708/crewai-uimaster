@@ -5,17 +5,30 @@
   let newCrewName = '';
   let loading = true;
   let error = null;
+  let errorTimeout;
+  
+  // Function to set error with auto-dismiss
+  function setError(message) {
+    clearTimeout(errorTimeout);
+    error = message;
+    
+    if (error) {
+      errorTimeout = setTimeout(() => {
+        error = null;
+      }, 3000);
+    }
+  }
   
   // Fetch the list of crews from the API
   async function fetchCrews() {
     loading = true;
-    error = null;
+    setError(null);
     try {
       const response = await fetch('/api/list-crews');
       if (!response.ok) throw new Error('Failed to fetch crews');
       crews = await response.json();
     } catch (err) {
-      error = err.message;
+      setError(err.message);
       console.error('Error fetching crews:', err);
     } finally {
       loading = false;
@@ -28,7 +41,7 @@
     
     // Validate crew name format - only allow letters, numbers, and underscores
     if (!/^[a-zA-Z0-9_]+$/.test(newCrewName)) {
-      error = "Crew name can only contain letters, numbers, and underscores (_)";
+      setError("Crew name can only contain letters, numbers, and underscores (_)");
       return;
     }
     
@@ -47,7 +60,7 @@
       await fetchCrews();
       newCrewName = '';
     } catch (err) {
-      error = err.message;
+      setError(err.message);
       console.error('Error creating crew:', err);
     }
   }
@@ -69,29 +82,39 @@
       // Refresh the crew list
       await fetchCrews();
     } catch (err) {
-      error = err.message;
+      setError(err.message);
       console.error('Error deleting crew:', err);
     }
   }
   
-  // Load crews when the component mounts
-  onMount(fetchCrews);
+  // Load crews when the component mounts and cleanup on destroy
+  onMount(() => {
+    fetchCrews();
+    
+    // Cleanup function
+    return () => {
+      clearTimeout(errorTimeout);
+    };
+  });
 </script>
 
-<main class="container">
-  <h1>Crew Management</h1>
-  
-  {#if error}
+<!-- Move the error alert outside main container so it's fixed at the top -->
+{#if error}
+  <div class="alert-fixed">
     <div class="alert">
       <p>{error}</p>
-      <button class="alert-dismiss" on:click={() => error = null}>
+      <button class="alert-dismiss" on:click={() => setError(null)}>
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="18" y1="6" x2="6" y2="18"></line>
           <line x1="6" y1="6" x2="18" y2="18"></line>
         </svg>
       </button>
     </div>
-  {/if}
+  </div>
+{/if}
+
+<main class="container">
+  <h1>Crew Management</h1>
   
   <section class="create-crew-section">
     <h2>Create New Crew</h2>
@@ -193,27 +216,59 @@
     letter-spacing: -0.015em;
   }
   
+  .alert-fixed {
+    position: fixed;
+    top: 20px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    z-index: 2000; /* Higher than modal overlay */
+    pointer-events: none; /* Let clicks pass through to elements below */
+    animation: slideDown 0.3s ease-out;
+  }
+  
   .alert {
-    background-color: rgba(245, 101, 101, 0.1);
-    color: #ef4444;
+    background-color: rgba(245, 101, 101, 0.95);
+    color: white;
     padding: 1rem 1.5rem;
     border-radius: 8px;
     margin-bottom: 1.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-left: 4px solid #ef4444;
+    max-width: 600px;
+    width: 90%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    pointer-events: auto; /* Make the alert itself clickable */
+    animation: fadeIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards;
+    border-left: none;
   }
   
   .alert-dismiss {
     background: none;
     border: none;
-    color: #ef4444;
+    color: white;
     cursor: pointer;
     padding: 0.25rem;
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+  
+  @keyframes slideDown {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(0); }
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
   }
   
   section {

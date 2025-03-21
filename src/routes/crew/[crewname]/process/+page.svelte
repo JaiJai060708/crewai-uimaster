@@ -15,7 +15,33 @@
   let originalProcess = {};
   let loading = true;
   let error = null;
+  let errorTimeout;
   let saveSuccess = false;
+  let successTimeout;
+  
+  // Function to set error with auto-dismiss
+  function setError(message) {
+    clearTimeout(errorTimeout);
+    error = message;
+    
+    if (error) {
+      errorTimeout = setTimeout(() => {
+        error = null;
+      }, 3000);
+    }
+  }
+  
+  // Function to set success with auto-dismiss
+  function setSuccess(value) {
+    clearTimeout(successTimeout);
+    saveSuccess = value;
+    
+    if (saveSuccess) {
+      successTimeout = setTimeout(() => {
+        saveSuccess = false;
+      }, 3000);
+    }
+  }
   
   // Replace these two variables
   // let availableAgents = [];
@@ -27,7 +53,7 @@
   // Fetch process data
   async function fetchProcessData() {
     loading = true;
-    error = null;
+    setError(null);
     
     try {
       // Fetch process information for the crew
@@ -65,7 +91,7 @@
       await fetchAvailableAgentTasks();
       
     } catch (err) {
-      error = err.message;
+      setError(err.message);
       console.error('Error fetching process data:', err);
     } finally {
       loading = false;
@@ -154,8 +180,8 @@
   // Save process data
   async function saveProcess() {
     loading = true;
-    error = null;
-    saveSuccess = false;
+    setError(null);
+    setSuccess(false);
     
     try {
       // Prepare the data with correct format to match the crew structure in YAML
@@ -184,15 +210,10 @@
       
       // Update the original process data after successful save
       originalProcess = JSON.parse(JSON.stringify(process));
-      saveSuccess = true;
-      
-      // Hide success message after 3 seconds
-      setTimeout(() => {
-        saveSuccess = false;
-      }, 3000);
+      setSuccess(true);
       
     } catch (err) {
-      error = err.message;
+      setError(err.message);
       console.error('Error saving process data:', err);
     } finally {
       loading = false;
@@ -261,8 +282,45 @@
   // Check if changes were made
   $: hasChanges = JSON.stringify(process) !== JSON.stringify(originalProcess);
   
-  onMount(fetchProcessData);
+  onMount(() => {
+    fetchProcessData();
+    
+    // Return cleanup function
+    return () => {
+      clearTimeout(errorTimeout);
+      clearTimeout(successTimeout);
+    };
+  });
 </script>
+
+<!-- Fixed position alerts that are always visible -->
+{#if error}
+  <div class="alert-fixed">
+    <div class="alert error">
+      <p>{error}</p>
+      <button class="alert-dismiss" on:click={() => setError(null)}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+{/if}
+
+{#if saveSuccess}
+  <div class="alert-fixed">
+    <div class="alert success">
+      <p>Process saved successfully!</p>
+      <button class="alert-dismiss" on:click={() => setSuccess(false)}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+{/if}
 
 <main class="container">
   <header class="process-header">
@@ -281,30 +339,6 @@
     </div>
     <div class="spacer"></div>
   </header>
-  
-  {#if error}
-    <div class="alert">
-      <p>{error}</p>
-      <button class="alert-dismiss" on:click={() => error = null}>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
-    </div>
-  {/if}
-  
-  {#if saveSuccess}
-    <div class="success-alert">
-      <p>Process saved successfully!</p>
-      <button class="alert-dismiss" on:click={() => saveSuccess = false}>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
-    </div>
-  {/if}
   
   {#if loading}
     <div class="loading-container">
@@ -523,39 +557,67 @@
     background-color: #f8fafc;
   }
   
-  .alert {
-    background-color: rgba(245, 101, 101, 0.1);
-    color: #ef4444;
-    padding: 1rem 1.5rem;
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
+  .alert-fixed {
+    position: fixed;
+    top: 20px;
+    left: 0;
+    right: 0;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-left: 4px solid #ef4444;
+    justify-content: center;
+    z-index: 2000; /* Higher than modal overlay */
+    pointer-events: none; /* Let clicks pass through to elements below */
+    animation: slideDown 0.3s ease-out;
   }
   
-  .success-alert {
-    background-color: rgba(110, 231, 183, 0.1);
-    color: #10b981;
+  .alert {
     padding: 1rem 1.5rem;
     border-radius: 8px;
     margin-bottom: 1.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-left: 4px solid #10b981;
+    max-width: 600px;
+    width: 90%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    pointer-events: auto; /* Make the alert itself clickable */
+  }
+  
+  .alert.error {
+    background-color: rgba(245, 101, 101, 0.95);
+    color: white;
+    animation: fadeIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards;
+  }
+  
+  .alert.success {
+    background-color: rgba(16, 185, 129, 0.95);
+    color: white;
+    animation: fadeIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards;
   }
   
   .alert-dismiss {
     background: none;
     border: none;
-    color: inherit;
+    color: white;
     cursor: pointer;
     padding: 0.25rem;
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+  
+  @keyframes slideDown {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(0); }
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
   }
   
   .loading-container {

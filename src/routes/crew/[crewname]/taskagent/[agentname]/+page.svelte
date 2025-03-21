@@ -332,6 +332,35 @@
     }
   </script>
   
+  <!-- Fixed position alerts that are always visible -->
+  {#if error}
+    <div class="alert-fixed">
+      <div class="alert error">
+        <p>{error}</p>
+        <button class="alert-dismiss" on:click={() => error = null}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+  {/if}
+  
+  {#if saveSuccess}
+    <div class="alert-fixed">
+      <div class="alert success">
+        <p>Task Agent saved successfully!</p>
+        <button class="alert-dismiss" on:click={() => saveSuccess = false}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+  {/if}
+  
   <main class="container">
     <header class="taskagent-header">
       <a href="/crew/{crewName}" class="back-link">
@@ -364,31 +393,6 @@
       {/if}
     </header>
     
-    {#if error}
-      <div class="alert">
-        <p>{error}</p>
-        <button class="alert-dismiss" on:click={() => error = null}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-    {/if}
-    
-    {#if saveSuccess}
-      <div class="success-alert">
-        <p>Task Agent created successfully!</p>
-        <button class="alert-dismiss" on:click={() => saveSuccess = false}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
-    {/if}
-    
-    <!-- Add the delete confirmation modal -->
     {#if deleteConfirmOpen}
       <div class="modal-overlay">
         <div class="modal-content delete-confirmation">
@@ -649,7 +653,7 @@
               <polyline points="17 21 17 13 7 13 7 21"></polyline>
               <polyline points="7 3 7 8 15 8"></polyline>
             </svg>
-            Create Task Agent
+            Save Changes
           </button>
         </div>
       </form>
@@ -736,41 +740,6 @@
       color: #3b82f6;
       border-color: #bfdbfe;
       background-color: #f8fafc;
-    }
-    
-    .alert {
-      background-color: rgba(245, 101, 101, 0.1);
-      color: #ef4444;
-      padding: 1rem 1.5rem;
-      border-radius: 8px;
-      margin-bottom: 1.5rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-left: 4px solid #ef4444;
-    }
-    
-    .success-alert {
-      background-color: rgba(110, 231, 183, 0.1);
-      color: #10b981;
-      padding: 1rem 1.5rem;
-      border-radius: 8px;
-      margin-bottom: 1.5rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-left: 4px solid #10b981;
-    }
-    
-    .alert-dismiss {
-      background: none;
-      border: none;
-      color: inherit;
-      cursor: pointer;
-      padding: 0.25rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
     
     .loading-container {
@@ -1449,5 +1418,69 @@
       .delete-message {
         font-size: 1rem;
       }
+    }
+    
+    /* Add the fixed alert styles */
+    .alert-fixed {
+      position: fixed;
+      top: 20px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      z-index: 2000; /* Higher than modal overlay */
+      pointer-events: none; /* Let clicks pass through to elements below */
+      animation: slideDown 0.3s ease-out;
+    }
+    
+    .alert {
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 600px;
+      width: 90%;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      pointer-events: auto; /* Make the alert itself clickable */
+    }
+    
+    .alert.error {
+      background-color: rgba(245, 101, 101, 0.95);
+      color: white;
+      animation: fadeIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards;
+    }
+    
+    .alert.success {
+      background-color: rgba(16, 185, 129, 0.95);
+      color: white;
+      animation: fadeIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards;
+    }
+    
+    .alert-dismiss {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      padding: 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    @keyframes slideDown {
+      from { transform: translateY(-100%); }
+      to { transform: translateY(0); }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
     }
   </style>   

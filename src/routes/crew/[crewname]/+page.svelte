@@ -11,6 +11,7 @@
   };
   let loading = true;
   let error = null;
+  let errorTimeout;
   
   // New variables for forms
   let showAgentForm = false;
@@ -56,13 +57,32 @@
     }
   }
   
+  // Function to clear error after timeout
+  function setError(message) {
+    clearTimeout(errorTimeout);
+    error = message;
+    
+    if (error) {
+      errorTimeout = setTimeout(() => {
+        error = null;
+      }, 3000);
+    }
+  }
+  
   // Create new agent
   async function createAgent(event) {
     event.preventDefault();
     
     // Validate agent name format - only allow letters, numbers, and underscores
     if (!/^[a-zA-Z0-9_]+$/.test(newAgentName)) {
-      error = "Agent name can only contain letters, numbers, and underscores (_)";
+      setError("Agent name can only contain letters, numbers, and underscores (_)");
+      formSubmitting = false;
+      return;
+    }
+    
+    // Check if an agent with the same name already exists in this crew
+    if (crew.agents && Object.keys(crew.agents).includes(newAgentName)) {
+      setError(`An agent named "${newAgentName}" already exists in this crew`);
       formSubmitting = false;
       return;
     }
@@ -80,7 +100,7 @@
     
     // Validate task name format - only allow letters, numbers, and underscores
     if (!/^[a-zA-Z0-9_]+$/.test(newTaskName)) {
-      error = "Task name can only contain letters, numbers, and underscores (_)";
+      setError("Task name can only contain letters, numbers, and underscores (_)");
       formSubmitting = false;
       return;
     }
@@ -111,7 +131,7 @@
       goto(`/crew/${crew.name}/task/${newTaskName}`);
       
     } catch (err) {
-      error = err.message;
+      setError(err.message);
       console.error('Error creating task:', err);
       formSubmitting = false;
       showTaskForm = false;
@@ -121,7 +141,7 @@
   // Function to delete the crew
   async function deleteCrew() {
     deleteInProgress = true;
-    error = null;
+    setError(null);
     
     try {
       const response = await fetch(`/api/crew/${crew.name}`, {
@@ -136,7 +156,7 @@
       goto('/');
       
     } catch (err) {
-      error = err.message;
+      setError(err.message);
       console.error('Error deleting crew:', err);
       deleteInProgress = false;
       showDeleteConfirmation = false;
@@ -144,9 +164,33 @@
   }
   
   onMount(fetchCrewData);
+  
+  // Cleanup on component destruction
+  onMount(() => {
+    fetchCrewData();
+    
+    return () => {
+      clearTimeout(errorTimeout);
+    };
+  });
 </script>
 
 <main class="container">
+  <!-- Move the error alert outside main container so it's fixed at the top -->
+  {#if error}
+    <div class="alert-fixed">
+      <div class="alert">
+        <p>{error}</p>
+        <button class="alert-dismiss" on:click={() => setError(null)}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+  {/if}
+  
   <header class="crew-header">
     <a href="/" class="back-link">
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -167,18 +211,6 @@
     </button>
   </header>
   
-  {#if error}
-    <div class="alert">
-      <p>{error}</p>
-      <button class="alert-dismiss" on:click={() => error = null}>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
-    </div>
-  {/if}
-  
   {#if loading}
     <div class="loading-container">
       <div class="loading-spinner"></div>
@@ -188,13 +220,22 @@
     <section class="workflow-section">
       <div class="section-header">
         <h2>Team Structure</h2>
-        <a href="/crew/{crew.name}/process" class="edit-button">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-          </svg>
-          Edit Team Structure
-        </a>
+        <div class="header-actions">
+          <a href="/crew/{crew.name}/process" class="edit-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+            Edit Team Structure
+          </a>
+          <button class="add-button professional" on:click={() => showAgentForm = true}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add Agent
+          </button>
+        </div>
       </div>
       
       {#if crew.process?.crew?.process?.toLowerCase() === 'sequential'}
@@ -578,13 +619,6 @@
           </div>
         {/if}
       {/if}
-      <button class="add-button" on:click={() => showAgentForm = true}>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-        Add Agent
-      </button>
     </section>
     
     <!-- New Run Section -->
@@ -1256,6 +1290,39 @@
     margin-bottom: 1.25rem;
   }
   
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .add-button.professional {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .add-button.professional:hover {
+    background-color: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  }
+  
+  .add-button.professional:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
   .add-button {
     display: flex;
     align-items: center;
@@ -1265,6 +1332,7 @@
     border: none;
     padding: 0.5rem 1rem;
     border-radius: 6px;
+    font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s;
@@ -1272,6 +1340,10 @@
   
   .add-button:hover {
     background-color: #2563eb;
+  }
+  
+  .add-button:active {
+    transform: translateY(0);
   }
   
   .modal-overlay {
@@ -2059,4 +2131,62 @@
       align-items: center;
     }
   }
+  
+  /* ... existing styles ... */
+  
+  .alert-fixed {
+    position: fixed;
+    top: 20px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    z-index: 2000; /* Higher than modal overlay */
+    pointer-events: none; /* Let clicks pass through to elements below */
+    animation: slideDown 0.3s ease-out;
+  }
+  
+  .alert {
+    background-color: rgba(245, 101, 101, 0.95);
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 600px;
+    width: 90%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    pointer-events: auto; /* Make the alert itself clickable */
+    animation: fadeIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s forwards;
+  }
+  
+  .alert-dismiss {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  @keyframes slideDown {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(0); }
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+  
+  /* ... rest of your styles ... */
 </style>
