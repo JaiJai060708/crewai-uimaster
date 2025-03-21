@@ -7,6 +7,7 @@ A powerful interface for creating and managing AI agents to solve complex proble
 - Python 3.12+
 - Node.js and npm
 - OpenAI API key
+- SERPER_API_KEY
 
 ## Environment Setup
 
@@ -14,6 +15,7 @@ A powerful interface for creating and managing AI agents to solve complex proble
 
 # env
 OPENAI_API_KEY
+SERPER_API_KEY
 
 ## Installation
 

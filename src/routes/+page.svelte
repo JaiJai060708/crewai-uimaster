@@ -136,12 +136,12 @@
   </section>
   
   <section class="crew-list-section">
-    <h2>Your Crews</h2>
+    <h2>Your Teams</h2>
     
     {#if loading}
       <div class="loading-container">
         <div class="loading-spinner"></div>
-        <p>Loading crews...</p>
+        <p>Loading teams...</p>
       </div>
     {:else if crews.length === 0}
       <div class="empty-state">
@@ -150,7 +150,7 @@
           <line x1="12" y1="8" x2="12" y2="12"></line>
           <line x1="12" y1="16" x2="12.01" y2="16"></line>
         </svg>
-        <p>No crews found. Create your first crew above!</p>
+        <p>No teams found. Create your first team above!</p>
       </div>
     {:else}
       <ul class="crew-grid">
