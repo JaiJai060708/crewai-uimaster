@@ -209,7 +209,7 @@
             </div>
             <div class="sequential-chart">
               {#each crew.process.crew.agents as agentName, index}
-                <div class="agent-node" class:highlighted={index === 0}>
+                <div class="agent-node" class:highlighted={index === 0} on:click={() => goto(`/crew/${crew.name}/taskagent/${agentName}`)}>
                   <div class="step-number">{index + 1}</div>
                   <div class="agent-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -277,7 +277,7 @@
                 <h3>Unused Agents</h3>
                 <div class="unused-agents-grid">
                   {#each Object.keys(crew.agents).filter(agentName => !crew.process.crew.agents.includes(agentName)) as unusedAgentName}
-                    <div class="agent-node unused">
+                    <div class="agent-node unused" on:click={() => goto(`/crew/${crew.name}/taskagent/${unusedAgentName}`)}>
                       <div class="agent-icon unused">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -331,7 +331,7 @@
                 </div>
                 <div class="hierarchical-chart">
                 <div class="manager-tier">
-                    <div class="agent-node manager">
+                    <div class="agent-node manager" on:click={() => goto(`/crew/${crew.name}/taskagent/Manager Agent`)}>
                     <div class="role-label">Manager</div>
                     <div class="agent-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -379,7 +379,7 @@
                 
                 <div class="workers-tier">
                     {#each crew.process.crew.agents as agentName, index}
-                    <div class="agent-node worker">
+                    <div class="agent-node worker" on:click={() => goto(`/crew/${crew.name}/taskagent/${agentName}`)}>
                         <div class="role-label">Worker</div>
                         <div class="agent-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -430,7 +430,7 @@
                 <h3>Unused Agents</h3>
                 <div class="unused-agents-grid">
                   {#each Object.keys(crew.agents).filter(agentName => !crew.process.crew.agents.includes(agentName) && agentName !== "Manager Agent") as unusedAgentName}
-                    <div class="agent-node unused">
+                    <div class="agent-node unused" on:click={() => goto(`/crew/${crew.name}/taskagent/${unusedAgentName}`)}>
                       <div class="agent-icon unused">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -483,7 +483,7 @@
             <h3>Unused Agents</h3>
             <div class="unused-agents-grid">
               {#each Object.keys(crew.agents) as agentName}
-                <div class="agent-node unused">
+                <div class="agent-node unused" on:click={() => goto(`/crew/${crew.name}/taskagent/${agentName}`)}>
                   <div class="agent-icon unused">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -982,6 +982,7 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     position: relative;
     transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer; /* Add this to indicate it's clickable */
   }
   
   .agent-node:hover {
