@@ -169,29 +169,27 @@
 
 <main class="container">
   <header class="agent-header">
+    <a href="/crew/{crewName}" class="back-link">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      Back to Crew
+    </a>
     <div class="title-section">
       <h1>{agentName}</h1>
       <div class="agent-crew">
         From crew: <a href="/crew/{crewName}">{crewName}</a>
       </div>
     </div>
-    <div class="actions">
-      <button class="delete-btn" on:click={deleteAgent} disabled={loading}>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 6h18"></path>
-          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-        </svg>
-        Delete Agent
-      </button>
-      <a href="/crew/{crewName}" class="back-link">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="19" y1="12" x2="5" y2="12"></line>
-          <polyline points="12 19 5 12 12 5"></polyline>
-        </svg>
-        Back to Crew
-      </a>
-    </div>
+    <button class="delete-btn" on:click={deleteAgent} disabled={loading}>
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6h18"></path>
+        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+      </svg>
+      Delete Agent
+    </button>
   </header>
   
   {#if error}
@@ -307,20 +305,16 @@
   .agent-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     margin-bottom: 2.5rem;
   }
   
   .title-section {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .actions {
-    display: flex;
-    gap: 1rem;
     align-items: center;
+    text-align: center;
+    flex: 1;
   }
   
   h1 {
@@ -358,6 +352,7 @@
     border-radius: 6px;
     border: 1px solid #e2e8f0;
     background-color: white;
+    margin-right: 1rem;
   }
   
   .back-link:hover {
@@ -378,6 +373,7 @@
     font-size: 0.95rem;
     cursor: pointer;
     transition: all 0.2s;
+    margin-left: 1rem;
   }
   
   .delete-btn:hover {
@@ -619,14 +615,24 @@
     }
     
     .agent-header {
-      flex-direction: column;
-      gap: 1.5rem;
+      flex-direction: row;
+      align-items: center;
+      gap: 0.5rem;
       margin-bottom: 1.5rem;
     }
     
-    .actions {
-      width: 100%;
-      justify-content: space-between;
+    h1 {
+      font-size: 1.8rem;
+    }
+    
+    .back-link, .delete-btn {
+      font-size: 0.8rem;
+      margin: 0;
+      padding: 0.4rem 0.6rem;
+    }
+    
+    .agent-crew {
+      font-size: 0.8rem;
     }
     
     .form-section {
@@ -636,10 +642,6 @@
     .form-group {
       padding: 0.75rem;
       margin-bottom: 1.5rem;
-    }
-    
-    h1 {
-      font-size: 2rem;
     }
   }
 </style>

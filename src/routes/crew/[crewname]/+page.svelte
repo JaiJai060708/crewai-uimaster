@@ -174,25 +174,23 @@
 
 <main class="container">
   <header class="crew-header">
+    <a href="/" class="back-link">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      Back to Crews
+    </a>
     <h1>{crew.name}</h1>
-    <div class="header-actions">
-      <button class="delete-crew-button" on:click={() => showDeleteConfirmation = true}>
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="3 6 5 6 21 6"></polyline>
-          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-          <line x1="10" y1="11" x2="10" y2="17"></line>
-          <line x1="14" y1="11" x2="14" y2="17"></line>
-        </svg>
-        Delete Crew
-      </button>
-      <a href="/" class="back-link">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="19" y1="12" x2="5" y2="12"></line>
-          <polyline points="12 19 5 12 12 5"></polyline>
-        </svg>
-        Back to Crews
-      </a>
-    </div>
+    <button class="delete-crew-button" on:click={() => showDeleteConfirmation = true}>
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        <line x1="10" y1="11" x2="10" y2="17"></line>
+        <line x1="14" y1="11" x2="14" y2="17"></line>
+      </svg>
+      Delete Crew
+    </button>
   </header>
   
   {#if error}
@@ -633,12 +631,23 @@
     color: #0f172a;
     letter-spacing: -0.025em;
     margin: 0;
+    text-align: center;
+    flex: 1;
   }
   
-  .header-actions {
+  .back-link {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.5rem;
+    color: #64748b;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+    margin-right: 1rem;
+  }
+  
+  .back-link:hover {
+    color: #3b82f6;
   }
   
   .delete-crew-button {
@@ -654,25 +663,12 @@
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s, color 0.2s;
+    margin-left: 1rem;
   }
   
   .delete-crew-button:hover {
     background-color: #fecaca;
     color: #991b1b;
-  }
-  
-  .back-link {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #64748b;
-    text-decoration: none;
-    font-size: 0.95rem;
-    transition: color 0.2s;
-  }
-  
-  .back-link:hover {
-    color: #3b82f6;
   }
   
   h2 {
@@ -1044,9 +1040,19 @@
     }
     
     .crew-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 1rem;
+      flex-direction: row;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    h1 {
+      font-size: 1.8rem;
+    }
+    
+    .back-link, .delete-crew-button {
+      font-size: 0.8rem;
+      margin: 0;
+      padding: 0.4rem 0.6rem;
     }
     
     .sequential-chart {

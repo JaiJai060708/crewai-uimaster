@@ -246,21 +246,20 @@
 
 <main class="container">
   <header class="process-header">
+    <a href="/crew/{crewName}" class="back-link">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      Back to Crew
+    </a>
     <div class="title-section">
       <h1>Process Configuration</h1>
       <div class="process-crew">
         For crew: <a href="/crew/{crewName}">{crewName}</a>
       </div>
     </div>
-    <div class="actions">
-      <a href="/crew/{crewName}" class="back-link">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="19" y1="12" x2="5" y2="12"></line>
-          <polyline points="12 19 5 12 12 5"></polyline>
-        </svg>
-        Back to Crew
-      </a>
-    </div>
+    <div class="spacer"></div>
   </header>
   
   {#if error}
@@ -511,20 +510,20 @@
   .process-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     margin-bottom: 2.5rem;
   }
   
   .title-section {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    align-items: center;
+    text-align: center;
+    flex: 1;
   }
   
-  .actions {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
+  .spacer {
+    width: 115px; /* Approximate width of the back button to maintain balance */
   }
   
   h1 {
@@ -562,6 +561,7 @@
     border-radius: 6px;
     border: 1px solid #e2e8f0;
     background-color: white;
+    margin-right: 1rem;
   }
   
   .back-link:hover {
@@ -916,13 +916,28 @@
     }
     
     .process-header {
-      flex-direction: column;
-      gap: 1.5rem;
+      flex-direction: row;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
     }
     
-    .actions {
-      width: 100%;
-      justify-content: flex-end;
+    h1 {
+      font-size: 1.8rem;
+    }
+    
+    .back-link {
+      font-size: 0.8rem;
+      margin: 0;
+      padding: 0.4rem 0.6rem;
+    }
+    
+    .process-crew {
+      font-size: 0.8rem;
+    }
+    
+    .spacer {
+      display: none; /* Hide spacer on mobile to save space */
     }
     
     .form-section {
