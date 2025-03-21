@@ -15,6 +15,7 @@
   let showLogs = true; // New state variable to track logs visibility
   let elapsedSeconds = 0; // Add counter for elapsed time
   let timerInterval; // Store interval reference
+  let userToggledLogs = false;
   
   // Fetch input variables
   async function fetchInputVariables() {
@@ -221,6 +222,9 @@
   
   // Toggle logs visibility with animation
   function toggleLogs() {
+    if (finalResult) {
+      userToggledLogs = true;
+    }
     const logContainer = document.querySelector('.log-container');
     const resultContainer = document.querySelector('.result-container');
     
@@ -228,12 +232,8 @@
       // We're about to hide logs and show results
       if (logContainer) {
         logContainer.classList.add('animating-out');
-        
-        // Increased from 300ms to 500ms
         setTimeout(() => {
           showLogs = false;
-          
-          // Animate the result in
           if (resultContainer) {
             resultContainer.classList.add('animating-in');
             setTimeout(() => {
@@ -246,16 +246,10 @@
       // We're about to show logs and hide results
       if (resultContainer) {
         resultContainer.classList.add('animating-out');
-        
-        // Increased from 300ms to 500ms
         setTimeout(() => {
           showLogs = true;
-          
-          // Animate the logs in and scroll to bottom
           if (logContainer) {
             logContainer.classList.add('animating-in');
-            
-            // Ensure scrolling happens after animation
             setTimeout(() => {
               logContainer.classList.remove('animating-in');
               logContainer.scrollTo({
@@ -271,30 +265,26 @@
   
   // Track when final result is received to trigger animation
   $: if (finalResult && logs.length > 0) {
-    // Auto-hide logs when result comes in (with animation)
-    // Increased delay from 500ms to 1200ms before starting animation
-    setTimeout(() => {
+  setTimeout(() => {
+    if (showLogs && !userToggledLogs) {
       const logContainer = document.querySelector('.log-container');
       const resultContainer = document.querySelector('.result-container');
       
-      if (logContainer && showLogs) {
+      if (logContainer) {
         logContainer.classList.add('animating-out');
-        
-        // Increased transition delay from 300ms to 500ms
         setTimeout(() => {
           showLogs = false;
-          
           if (resultContainer) {
             resultContainer.classList.add('animating-in');
-            // Keeping this at 500ms for the final animation cleanup
             setTimeout(() => {
               resultContainer.classList.remove('animating-in');
             }, 500);
           }
         }, 500);
       }
-    }, 1200); // Increased from 500ms to 1200ms for a more noticeable pause
-  }
+    }
+  }, 1200);
+}
   
   // Auto-scroll to bottom of log container
   $: if (logs.length) {
