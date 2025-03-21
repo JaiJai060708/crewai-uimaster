@@ -13,6 +13,8 @@
   let finalResult = null;
   let inputVariables = {};
   let showLogs = true; // New state variable to track logs visibility
+  let elapsedSeconds = 0; // Add counter for elapsed time
+  let timerInterval; // Store interval reference
   
   // Fetch input variables
   async function fetchInputVariables() {
@@ -145,6 +147,12 @@
     logs = [];
     finalResult = null;
     error = null;
+    elapsedSeconds = 0; // Reset timer
+    
+    // Start the timer
+    timerInterval = setInterval(() => {
+      elapsedSeconds += 1;
+    }, 1000);
     
     try {
       // Add a log to show that we're starting
@@ -207,6 +215,7 @@
       logs = [...logs, { type: 'error', message: `Error: ${err.message}` }];
     } finally {
       isRunning = false;
+      clearInterval(timerInterval); // Clear the timer
     }
   }
   
@@ -301,7 +310,14 @@
     }, 100);
   }
   
-  onMount(fetchInputVariables);
+  onMount(() => {
+    fetchInputVariables();
+    
+    // Clean up any timers on unmount
+    return () => {
+      if (timerInterval) clearInterval(timerInterval);
+    };
+  });
 </script>
 
 <main class="container">
@@ -422,6 +438,19 @@
         <!-- Log container with animation classes -->
         {#if !finalResult || (finalResult && showLogs)}
           <div class="log-container {finalResult && !showLogs ? 'hidden' : ''}">
+            <!-- Add the thinking animation when running -->
+            {#if isRunning}
+              <div class="thinking-bar">
+                <div class="thinking-animation">
+                  <span class="dot"></span>
+                  <span class="dot"></span>
+                  <span class="dot"></span>
+                </div>
+                <div class="thinking-text">Thinking</div>
+                <div class="elapsed-time">{elapsedSeconds}s</div>
+              </div>
+            {/if}
+            
             {#if logs.length === 0}
               <div class="empty-logs">
                 No logs yet. Set input variables and run the crew to see execution logs here.
@@ -1019,6 +1048,69 @@
     100% {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+  
+  /* Thinking animation styles */
+  .thinking-bar {
+    position: sticky;
+    top: 0;
+    background-color: #1a2234;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+  }
+  
+  .thinking-animation {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  
+  .dot {
+    width: 8px;
+    height: 8px;
+    background-color: #60a5fa;
+    border-radius: 50%;
+    animation: pulse 1.5s infinite ease-in-out;
+  }
+  
+  .dot:nth-child(2) {
+    animation-delay: 0.3s;
+  }
+  
+  .dot:nth-child(3) {
+    animation-delay: 0.6s;
+  }
+  
+  .thinking-text {
+    font-weight: 600;
+    color: #a3e635;
+    margin-left: 0.75rem;
+  }
+  
+  .elapsed-time {
+    color: #94a3b8;
+    font-family: "Menlo", "Monaco", "Courier New", monospace;
+    font-size: 0.8rem;
+    background-color: rgba(15, 23, 42, 0.5);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 0.5;
+    }
+    50% {
+      transform: scale(1.3);
+      opacity: 1;
     }
   }
 </style>
