@@ -20,6 +20,10 @@
   let formSubmitting = false;
   let successMessage = null;
   
+  // Function to delete the crew
+  let showDeleteConfirmation = false;
+  let deleteInProgress = false;
+  
   // Fetch crew data
   async function fetchCrewData() {
     loading = true;
@@ -140,19 +144,55 @@
     }
   }
   
+  // Function to delete the crew
+  async function deleteCrew() {
+    deleteInProgress = true;
+    error = null;
+    
+    try {
+      const response = await fetch(`/api/crew/${crew.name}`, {
+        method: 'DELETE'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete crew');
+      }
+      
+      // Navigate back to the crews list
+      goto('/');
+      
+    } catch (err) {
+      error = err.message;
+      console.error('Error deleting crew:', err);
+      deleteInProgress = false;
+      showDeleteConfirmation = false;
+    }
+  }
+  
   onMount(fetchCrewData);
 </script>
 
 <main class="container">
   <header class="crew-header">
     <h1>{crew.name}</h1>
-    <a href="/" class="back-link">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="19" y1="12" x2="5" y2="12"></line>
-        <polyline points="12 19 5 12 12 5"></polyline>
-      </svg>
-      Back to Crews
-    </a>
+    <div class="header-actions">
+      <button class="delete-crew-button" on:click={() => showDeleteConfirmation = true}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          <line x1="10" y1="11" x2="10" y2="17"></line>
+          <line x1="14" y1="11" x2="14" y2="17"></line>
+        </svg>
+        Delete Crew
+      </button>
+      <a href="/" class="back-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Back to Crews
+      </a>
+    </div>
   </header>
   
   {#if error}
@@ -528,6 +568,44 @@
   </div>
 {/if}
 
+{#if showDeleteConfirmation}
+  <div class="modal-overlay">
+    <div class="modal-content delete-confirmation">
+      <div class="modal-header">
+        <h3>Delete Crew</h3>
+        <button class="modal-close" on:click={() => showDeleteConfirmation = false}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="delete-confirmation-content">
+        <div class="warning-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </div>
+        <p>Are you sure you want to delete the crew "<strong>{crew.name}</strong>"?</p>
+        <p class="warning-text">This action cannot be undone. All agents, tasks, and processes related to this crew will be permanently deleted.</p>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" on:click={() => showDeleteConfirmation = false}>Cancel</button>
+        <button type="button" class="btn-danger" on:click={deleteCrew} disabled={deleteInProgress}>
+          {#if deleteInProgress}
+            <span class="btn-spinner"></span>
+            Deleting...
+          {:else}
+            Delete Crew
+          {/if}
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
+
 <style>
   :global(body) {
     background-color: #f8fafc;
@@ -555,6 +633,32 @@
     color: #0f172a;
     letter-spacing: -0.025em;
     margin: 0;
+  }
+  
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .delete-crew-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+  }
+  
+  .delete-crew-button:hover {
+    background-color: #fecaca;
+    color: #991b1b;
   }
   
   .back-link {
@@ -1357,5 +1461,51 @@
     .agent-node:hover .delegation-arrow {
       transform: translateX(0);
     }
+  }
+  
+  .delete-confirmation {
+    max-width: 450px;
+  }
+  
+  .delete-confirmation-content {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .warning-icon {
+    margin-bottom: 1rem;
+    color: #f59e0b;
+  }
+  
+  .warning-text {
+    color: #b91c1c;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+  
+  .btn-danger {
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.25rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .btn-danger:hover:not(:disabled) {
+    background-color: #dc2626;
+  }
+  
+  .btn-danger:disabled {
+    background-color: #fca5a5;
+    cursor: not-allowed;
   }
 </style>
