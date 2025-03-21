@@ -391,15 +391,51 @@
     <!-- Add the delete confirmation modal -->
     {#if deleteConfirmOpen}
       <div class="modal-overlay">
-        <div class="modal-content">
-          <h3>Delete Task Agent</h3>
-          <p>Are you sure you want to delete the task agent <strong>{taskAgent.name}</strong> and its associated task? This action cannot be undone.</p>
-          
-          <div class="modal-actions">
-            <button class="cancel-btn" on:click={() => deleteConfirmOpen = false}>
+        <div class="modal-content delete-confirmation">
+          <div class="modal-header delete-header">
+            <h3>Delete Task Agent</h3>
+            <button class="modal-close" on:click={() => deleteConfirmOpen = false}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="delete-confirmation-content">
+            <div class="warning-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+            </div>
+            <h4 class="delete-title">Are you sure?</h4>
+            <p class="delete-message">You are about to delete the task agent "<strong>{taskAgent.name}</strong>"</p>
+            <div class="delete-details">
+              <p class="warning-text">This action cannot be undone. The agent and its associated task will be permanently deleted.</p>
+              <ul class="delete-impact-list">
+                <li>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                  <span>Agent "<strong>{taskAgent.name}</strong>" will be deleted</span>
+                </li>
+                <li>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 11l3 3L22 4"></path>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                  </svg>
+                  <span>Task "<strong>{taskName}</strong>" will be deleted</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="delete-form-actions">
+            <button type="button" class="btn-secondary" on:click={() => deleteConfirmOpen = false}>
               Cancel
             </button>
-            <button class="confirm-delete-btn" on:click={deleteTaskAgent}>
+            <button type="button" class="btn-danger" on:click={deleteTaskAgent}>
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="3 6 5 6 21 6"></polyline>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -1224,97 +1260,194 @@
       background-color: #fee2e2;
     }
     
-    /* Modal styling */
+    /* Modal styling - updated to fix transparency issues */
     .modal-overlay {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background-color: rgba(15, 23, 42, 0.5);
+      background-color: rgba(0, 0, 0, 0.5);
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       z-index: 1000;
+      backdrop-filter: blur(2px);
     }
     
-    .modal-content {
+    .modal-content.delete-confirmation {
       background-color: white;
-      border-radius: 12px;
-      padding: 2rem;
-      width: 90%;
       max-width: 500px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      overflow: hidden;
+      border-radius: 12px;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.2);
+      padding: 0;
     }
     
-    .modal-content h3 {
+    .modal-header.delete-header {
+      background-color: #fee2e2;
+      border-bottom: 1px solid #fecaca;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .modal-header.delete-header h3 {
+      margin: 0;
+      font-weight: 600;
+      font-size: 1.25rem;
+      color: #0f172a;
+    }
+    
+    .delete-confirmation-content {
+      background-color: white;
+      padding: 2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    
+    .warning-icon {
+      margin-bottom: 1.25rem;
+      color: #dc2626;
+      background-color: #fee2e2;
+      border-radius: 50%;
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .delete-title {
       font-size: 1.5rem;
       font-weight: 600;
-      color: #0f172a;
+      color: #111827;
+      margin: 0 0 0.75rem 0;
+    }
+    
+    .delete-message {
+      font-size: 1.1rem;
+      color: #374151;
+      margin: 0 0 1.5rem 0;
+    }
+    
+    .delete-details {
+      background-color: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 1.25rem;
+      width: 100%;
+      text-align: left;
+    }
+    
+    .warning-text {
+      color: #b91c1c;
+      font-size: 0.9rem;
       margin: 0 0 1rem 0;
+      padding-bottom: 1rem;
+      border-bottom: 1px dashed #e5e7eb;
     }
     
-    .modal-content p {
-      color: #334155;
-      line-height: 1.6;
-      margin-bottom: 1.5rem;
+    .delete-impact-list {
+      list-style: none;
+      padding: 0;
+      margin: 0.5rem 0 0 0;
     }
     
-    .modal-actions {
+    .delete-impact-list li {
       display: flex;
-      justify-content: flex-end;
-      gap: 1rem;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      color: #4b5563;
+      font-size: 0.9rem;
     }
     
-    .cancel-btn {
-      padding: 0.75rem 1.5rem;
-      background-color: white;
-      color: #64748b;
-      border: 1px solid #cbd5e1;
+    .delete-impact-list li svg {
+      color: #9ca3af;
+      flex-shrink: 0;
+    }
+    
+    .delete-form-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.25rem 1.5rem;
+      background-color: #f9fafb;
+      border-top: 1px solid #e5e7eb;
+    }
+    
+    .btn-secondary {
+      padding: 0.75rem 1.25rem;
       border-radius: 6px;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .cancel-btn:hover {
-      background-color: #f8fafc;
+      transition: background-color 0.2s;
+      background-color: #f1f5f9;
       color: #334155;
-    }
-    
-    .confirm-delete-btn {
+      border: 1px solid #cbd5e1;
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      padding: 0.75rem 1.5rem;
-      background-color: #ef4444;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #e2e8f0;
+    }
+    
+    .btn-danger {
+      background-color: #dc2626;
       color: white;
       border: none;
+      padding: 0.75rem 1.5rem;
       border-radius: 6px;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: background-color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
     
-    .confirm-delete-btn:hover {
-      background-color: #dc2626;
+    .btn-danger:hover:not(:disabled) {
+      background-color: #b91c1c;
     }
     
-    /* Responsive modal styling */
-    @media (max-width: 768px) {
-      .modal-content {
-        padding: 1.5rem;
-        width: 95%;
+    .btn-danger:disabled {
+      background-color: #fca5a5;
+      cursor: not-allowed;
+    }
+    
+    @media (max-width: 640px) {
+      .delete-confirmation {
+        max-width: 90%;
       }
       
-      .modal-actions {
+      .delete-form-actions {
         flex-direction: column-reverse;
-        gap: 0.5rem;
+        gap: 0.75rem;
       }
       
-      .cancel-btn, .confirm-delete-btn {
+      .delete-form-actions button {
         width: 100%;
         justify-content: center;
+      }
+      
+      .warning-icon {
+        width: 60px;
+        height: 60px;
+      }
+      
+      .delete-title {
+        font-size: 1.25rem;
+      }
+      
+      .delete-message {
+        font-size: 1rem;
       }
     }
   </style>   

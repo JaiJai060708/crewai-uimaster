@@ -719,7 +719,7 @@
 {#if showDeleteConfirmation}
   <div class="modal-overlay">
     <div class="modal-content delete-confirmation">
-      <div class="modal-header">
+      <div class="modal-header delete-header">
         <h3>Delete Crew</h3>
         <button class="modal-close" on:click={() => showDeleteConfirmation = false}>
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -730,17 +730,38 @@
       </div>
       <div class="delete-confirmation-content">
         <div class="warning-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
             <line x1="12" y1="9" x2="12" y2="13"></line>
             <line x1="12" y1="17" x2="12.01" y2="17"></line>
           </svg>
         </div>
-        <p>Are you sure you want to delete the crew "<strong>{crew.name}</strong>"?</p>
-        <p class="warning-text">This action cannot be undone. All agents, tasks, and processes related to this crew will be permanently deleted.</p>
+        <h4 class="delete-title">Are you sure?</h4>
+        <p class="delete-message">You are about to delete the crew "<strong>{crew.name}</strong>"</p>
+        <div class="delete-details">
+          <p class="warning-text">This action cannot be undone. All agents, tasks, and processes related to this crew will be permanently deleted.</p>
+          <ul class="delete-impact-list">
+            <li>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <span>{Object.keys(crew.agents).length} agent{Object.keys(crew.agents).length !== 1 ? 's' : ''} will be deleted</span>
+            </li>
+            <li>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 11l3 3L22 4"></path>
+                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+              </svg>
+              <span>{Object.keys(crew.tasks).length} task{Object.keys(crew.tasks).length !== 1 ? 's' : ''} will be deleted</span>
+            </li>
+          </ul>
+        </div>
       </div>
-      <div class="form-actions">
-        <button type="button" class="btn-secondary" on:click={() => showDeleteConfirmation = false}>Cancel</button>
+      <div class="delete-form-actions">
+        <button type="button" class="btn-secondary" on:click={() => showDeleteConfirmation = false}>
+          Cancel
+        </button>
         <button type="button" class="btn-danger" on:click={deleteCrew} disabled={deleteInProgress}>
           {#if deleteInProgress}
             <span class="btn-spinner"></span>
@@ -1621,11 +1642,19 @@
   }
   
   .delete-confirmation {
-    max-width: 450px;
+    max-width: 500px;
+    overflow: hidden;
+    border-radius: 12px;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.2);
+  }
+  
+  .modal-header.delete-header {
+    background-color: #fee2e2;
+    border-bottom: 1px solid #fecaca;
   }
   
   .delete-confirmation-content {
-    padding: 1.5rem;
+    padding: 2rem 1.5rem;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1633,21 +1662,81 @@
   }
   
   .warning-icon {
-    margin-bottom: 1rem;
-    color: #f59e0b;
+    margin-bottom: 1.25rem;
+    color: #dc2626;
+    background-color: #fee2e2;
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .delete-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 0.75rem 0;
+  }
+  
+  .delete-message {
+    font-size: 1.1rem;
+    color: #374151;
+    margin: 0 0 1.5rem 0;
+  }
+  
+  .delete-details {
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1.25rem;
+    width: 100%;
+    text-align: left;
   }
   
   .warning-text {
     color: #b91c1c;
     font-size: 0.9rem;
-    margin-top: 0.5rem;
+    margin: 0 0 1rem 0;
+    padding-bottom: 1rem;
+    border-bottom: 1px dashed #e5e7eb;
+  }
+  
+  .delete-impact-list {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 0 0;
+  }
+  
+  .delete-impact-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    color: #4b5563;
+    font-size: 0.9rem;
+  }
+  
+  .delete-impact-list li svg {
+    color: #9ca3af;
+    flex-shrink: 0;
+  }
+  
+  .delete-form-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    background-color: #f9fafb;
+    border-top: 1px solid #e5e7eb;
   }
   
   .btn-danger {
-    background-color: #ef4444;
+    background-color: #dc2626;
     color: white;
     border: none;
-    padding: 0.75rem 1.25rem;
+    padding: 0.75rem 1.5rem;
     border-radius: 6px;
     font-weight: 500;
     cursor: pointer;
@@ -1658,12 +1747,41 @@
   }
   
   .btn-danger:hover:not(:disabled) {
-    background-color: #dc2626;
+    background-color: #b91c1c;
   }
   
   .btn-danger:disabled {
     background-color: #fca5a5;
     cursor: not-allowed;
+  }
+  
+  @media (max-width: 640px) {
+    .delete-confirmation {
+      max-width: 90%;
+    }
+    
+    .delete-form-actions {
+      flex-direction: column-reverse;
+      gap: 0.75rem;
+    }
+    
+    .delete-form-actions button {
+      width: 100%;
+      justify-content: center;
+    }
+    
+    .warning-icon {
+      width: 60px;
+      height: 60px;
+    }
+    
+    .delete-title {
+      font-size: 1.25rem;
+    }
+    
+    .delete-message {
+      font-size: 1rem;
+    }
   }
   
   /* Run Section Styles */
