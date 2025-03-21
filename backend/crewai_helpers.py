@@ -3,8 +3,10 @@ from crewai import Agent, Task, Crew, Process
 def run_crewai(process, agents, tasks, input_args):
     # Determine process type
     process_type = Process.sequential
+    manager_llm = None
     if process.get('crew', {}).get('process') == 'hierarchical':
         process_type = Process.hierarchical
+        manager_llm = 'gpt-4o'
     elif process.get('crew', {}).get('process') == 'parallel':
         process_type = Process.parallel
 
@@ -51,6 +53,7 @@ def run_crewai(process, agents, tasks, input_args):
         process=process_type,
         agents=agents_data,
         tasks=tasks_data,
+        manager_llm=manager_llm,
         verbose=True  # Ensures detailed console output
     )
 
