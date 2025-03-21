@@ -1,0 +1,19 @@
+[
+    {
+      "name": "SerperDevTool",
+      "description": "Integrates with the Serper API to perform real-time web searches directly from Python applications, enabling agents to access up-to-date information from the internet.",
+      "expected_input": {
+        "search_query": "A string representing the search term or phrase."
+      },
+      "expected_output": "A list of search results, each containing a title, link, and snippet of the content."
+    },
+    {
+      "name": "ScrapeWebsiteTool",
+      "description": "Extracts and reads the content of a specified website by making HTTP requests and parsing the received HTML, facilitating tasks like web scraping and data collection.",
+      "expected_input": {
+        "website_url": "A string specifying the URL of the website to be scraped."
+      },
+      "expected_output": "The textual content extracted from the specified website."
+    }
+  ]
+  
