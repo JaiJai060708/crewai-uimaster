@@ -1,4 +1,6 @@
 from crewai import Agent, Task, Crew, Process
+from crewai_tools import SerperDevTool, ScrapeWebsiteTool
+
 
 def run_crewai(process, agents, tasks, input_args):
     # Determine process type
@@ -14,11 +16,19 @@ def run_crewai(process, agents, tasks, input_args):
     agents_data = []
     for agent_id, agent_info in agents.items():
         if agent_id in process.get('crew', {}).get('agents', []):
+            tools = []
+            if agent_info.get('tools', []):
+                for tool in agent_info.get('tools', []):
+                    if tool == 'SerperDevTool':
+                        tools.append(SerperDevTool())
+                    elif tool == 'ScrapeWebsiteTool':
+                        tools.append(ScrapeWebsiteTool())
             agent = Agent(
                 role=agent_info.get('role', ''),
                 goal=agent_info.get('goal', ''),
                 backstory=agent_info.get('backstory', ''),
-                allow_delegation=agent_info.get('allow_delegation', False)
+                allow_delegation=agent_info.get('allow_delegation', False),
+                tools=tools
             )
             agents_data.append(agent)
 
@@ -47,6 +57,8 @@ def run_crewai(process, agents, tasks, input_args):
                     agent=agent
                 )
                 tasks_data.append(task)
+
+        
 
     # Create Crew object
     crew = Crew(

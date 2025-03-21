@@ -13,6 +13,18 @@ app = Flask(__name__)
 def home():
     return jsonify({"message": "Hello from Flask!"})
 
+@app.route('/api/tools', methods=['GET'], strict_slashes=False)
+def list_tools():
+    try:
+        tools_path = os.path.join(os.path.dirname(__file__), 'crewai_tools_config.json')
+        with open(tools_path, 'r') as f:
+            tools_data = json.load(f)
+        return jsonify(tools_data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
 @app.route('/api/list-crews', methods=['GET'], strict_slashes=False)
 def list_crews():
     try:

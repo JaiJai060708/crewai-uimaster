@@ -10,13 +10,16 @@
     role: '',
     goal: '',
     backstory: '',
-    allow_delegation: false
+    allow_delegation: false,
+    tools: [] // Initialize tools array
   };
   
   let originalAgent = {};
   let loading = true;
   let error = null;
   let saveSuccess = false;
+  let availableTools = []; // Store available tools from API
+  let toolsLoading = true; // Separate loading state for tools
   
   // Fetch agent data
   async function fetchAgentData() {
@@ -40,6 +43,11 @@
         agent.allow_delegation = false;
       }
       
+      // If tools is not defined, set it to an empty array by default
+      if (agent.tools === undefined) {
+        agent.tools = [];
+      }
+      
       // Create a deep copy of the original agent data
       originalAgent = JSON.parse(JSON.stringify(agent));
       
@@ -48,6 +56,30 @@
       console.error('Error fetching agent data:', err);
     } finally {
       loading = false;
+    }
+  }
+  
+  // Fetch available tools
+  async function fetchTools() {
+    toolsLoading = true;
+    try {
+      const response = await fetch('/api/tools');
+      if (!response.ok) throw new Error('Failed to fetch tools');
+      availableTools = await response.json();
+    } catch (err) {
+      console.error('Error fetching tools:', err);
+      error = err.message;
+    } finally {
+      toolsLoading = false;
+    }
+  }
+  
+  // Toggle tool selection
+  function toggleTool(toolName) {
+    if (agent.tools.includes(toolName)) {
+      agent.tools = agent.tools.filter(name => name !== toolName);
+    } else {
+      agent.tools = [...agent.tools, toolName];
     }
   }
   
@@ -160,7 +192,7 @@
   }
   
   onMount(() => {
-    fetchAgentData().then(() => {
+    Promise.all([fetchAgentData(), fetchTools()]).then(() => {
       // Initialize textarea resize after data is loaded
       setTimeout(initTextareaResize, 0);
     });
@@ -271,6 +303,77 @@
             <span class="checkbox-text">Allow Delegation</span>
           </label>
           <div class="field-description">If enabled, this agent can delegate tasks to other agents</div>
+        </div>
+        
+        <!-- New Tools Section -->
+        <div class="form-group tools-group">
+          <label>Agent Tools</label>
+          <div class="field-description">Select the tools this agent can use to accomplish tasks</div>
+          
+          {#if toolsLoading}
+            <div class="tools-loading">
+              <div class="loading-spinner-small"></div>
+              <span>Loading available tools...</span>
+            </div>
+          {:else if availableTools.length === 0}
+            <div class="no-tools-message">No tools available</div>
+          {:else}
+            <div class="tools-list">
+              {#each availableTools as tool}
+                <div class="tool-card {agent.tools.includes(tool.name) ? 'selected' : ''}">
+                  <div class="tool-header">
+                    <div class="tool-checkbox">
+                      <input 
+                        type="checkbox" 
+                        id="tool-{tool.name}" 
+                        checked={agent.tools.includes(tool.name)}
+                        on:change={() => toggleTool(tool.name)}
+                      />
+                      <label for="tool-{tool.name}" class="tool-name">{tool.name}</label>
+                    </div>
+                    <button 
+                      type="button" 
+                      class="tool-details-toggle"
+                      on:click={() => tool.showDetails = !tool.showDetails}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        {#if tool.showDetails}
+                          <polyline points="18 15 12 9 6 15"></polyline>
+                        {:else}
+                          <polyline points="6 9 12 15 18 9"></polyline>
+                        {/if}
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  <div class="tool-description">{tool.description}</div>
+                  
+                  {#if tool.showDetails}
+                    <div class="tool-details">
+                      <div class="tool-detail-section">
+                        <h4>Expected Input</h4>
+                        <div class="tool-io-container">
+                          {#each Object.entries(tool.expected_input) as [key, value]}
+                            <div class="tool-io-item">
+                              <span class="tool-io-key">{key}:</span>
+                              <span class="tool-io-value">{value}</span>
+                            </div>
+                          {/each}
+                        </div>
+                      </div>
+                      
+                      <div class="tool-detail-section">
+                        <h4>Expected Output</h4>
+                        <div class="tool-io-container">
+                          <div class="tool-io-value">{tool.expected_output}</div>
+                        </div>
+                      </div>
+                    </div>
+                  {/if}
+                </div>
+              {/each}
+            </div>
+          {/if}
         </div>
       </section>
       
@@ -609,6 +712,143 @@
     gap: 2rem;
   }
   
+  /* Styles for the tools section */
+  .tools-group {
+    background-color: #f8fafc;
+    border-radius: 8px;
+  }
+  
+  .tools-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    color: #64748b;
+  }
+  
+  .loading-spinner-small {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(59, 130, 246, 0.2);
+    border-radius: 50%;
+    border-top-color: #3b82f6;
+    animation: spin 1s ease-in-out infinite;
+  }
+  
+  .no-tools-message {
+    padding: 1rem;
+    color: #64748b;
+    text-align: center;
+    font-style: italic;
+  }
+  
+  .tools-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+  
+  .tool-card {
+    background-color: white;
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s;
+  }
+  
+  .tool-card.selected {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6;
+  }
+  
+  .tool-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  
+  .tool-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .tool-name {
+    font-weight: 600;
+    color: #0f172a;
+    cursor: pointer;
+  }
+  
+  .tool-description {
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+  }
+  
+  .tool-details-toggle {
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+  }
+  
+  .tool-details-toggle:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+  }
+  
+  .tool-details {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed #e2e8f0;
+  }
+  
+  .tool-detail-section {
+    margin-bottom: 1rem;
+  }
+  
+  .tool-detail-section h4 {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin: 0 0 0.5rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .tool-io-container {
+    background-color: #f8fafc;
+    border-radius: 6px;
+    padding: 0.75rem;
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-size: 0.85rem;
+  }
+  
+  .tool-io-item {
+    margin-bottom: 0.5rem;
+  }
+  
+  .tool-io-item:last-child {
+    margin-bottom: 0;
+  }
+  
+  .tool-io-key {
+    color: #2563eb;
+    font-weight: 600;
+  }
+  
+  .tool-io-value {
+    color: #334155;
+  }
+  
   @media (max-width: 768px) {
     .container {
       padding: 1rem;
@@ -642,6 +882,19 @@
     .form-group {
       padding: 0.75rem;
       margin-bottom: 1.5rem;
+    }
+    
+    .tool-card {
+      padding: 0.75rem;
+    }
+    
+    .tool-description {
+      font-size: 0.8rem;
+    }
+    
+    .tool-io-container {
+      padding: 0.5rem;
+      font-size: 0.75rem;
     }
   }
 </style>
