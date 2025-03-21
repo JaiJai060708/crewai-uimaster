@@ -224,34 +224,46 @@
         
         // Check if agent exists
         if (!agentData.agents[agentName]) {
-          throw new Error(`Agent "${agentName}" not found`);
-        }
-        
-        // Get agent details
-        const agent = agentData.agents[agentName];
-        
-        // Fetch task data
-        const taskName = `${agentName}_task`;
-        const taskResponse = await fetch(`/api/crew/${crewName}/tasks`);
-        if (!taskResponse.ok) throw new Error('Failed to fetch task data');
-        const taskData = await taskResponse.json();
-        
-        // Get task details if it exists
-        const task = taskData.tasks[taskName] || {};
-        
-        // Populate the taskAgent object with combined data
-        taskAgent = {
-          name: agentName,
-          role: agent.role || '',
-          goal: agent.goal || '',
-          backstory: agent.backstory || '',
-          allow_delegation: agent.allow_delegation || false,
-          tools: agent.tools || [],
+          // Remove the error and silently initialize a new task agent
+          taskAgent = {
+            name: agentName,
+            role: '',
+            goal: '',
+            backstory: '',
+            allow_delegation: false,
+            tools: [],
+            
+            description: '',
+            expected_output: '',
+            number_iterations: 1
+          };
+        } else {
+          // Get agent details
+          const agent = agentData.agents[agentName];
           
-          description: task.description || '',
-          expected_output: task.expected_output || '',
-          number_iterations: task.number_iterations || 1
-        };
+          // Fetch task data
+          const taskName = `${agentName}_task`;
+          const taskResponse = await fetch(`/api/crew/${crewName}/tasks`);
+          if (!taskResponse.ok) throw new Error('Failed to fetch task data');
+          const taskData = await taskResponse.json();
+          
+          // Get task details if it exists
+          const task = taskData.tasks[taskName] || {};
+          
+          // Populate the taskAgent object with combined data
+          taskAgent = {
+            name: agentName,
+            role: agent.role || '',
+            goal: agent.goal || '',
+            backstory: agent.backstory || '',
+            allow_delegation: agent.allow_delegation || false,
+            tools: agent.tools || [],
+            
+            description: task.description || '',
+            expected_output: task.expected_output || '',
+            number_iterations: task.number_iterations || 1
+          };
+        }
         
         // Update the original state for change detection
         originalTaskAgent = JSON.parse(JSON.stringify(taskAgent));

@@ -68,36 +68,10 @@
     }
     
     formSubmitting = true;
-    
-    try {
-      // Prepare the data - just create with empty details
-      const currentAgents = { ...crew.agents };
-      currentAgents[newAgentName] = {};
       
-      // Use the existing PUT endpoint
-      const response = await fetch(`/api/crew/${crew.name}/agents`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          agents: currentAgents
-        })
-      });
+    // Navigate to the agent detail page
+    goto(`/crew/${crew.name}/taskagent/${newAgentName}`);
       
-      if (!response.ok) {
-        throw new Error('Failed to create agent');
-      }
-      
-      // Navigate to the agent detail page
-      goto(`/crew/${crew.name}/agent/${newAgentName}`);
-      
-    } catch (err) {
-      error = err.message;
-      console.error('Error creating agent:', err);
-      formSubmitting = false;
-      showAgentForm = false;
-    }
   }
   
   // Create new task
@@ -406,111 +380,51 @@
           <p>Workflow structure not defined or uses an unknown process type.</p>
         </div>
       {/if}
+      <button class="add-button" on:click={() => showAgentForm = true}>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Add Agent
+      </button>
     </section>
     
-   
-    
-    <div class="two-column-layout">
-      <section class="info-section">
-        <h2>Agents</h2>
-        <div class="section-header">
-          <button class="add-button" on:click={() => showAgentForm = true}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            Add Agent
-          </button>
-        </div>
-        {#if crew.agents && Object.keys(crew.agents).length > 0}
-          <ul class="entity-list">
-            {#each Object.keys(crew.agents) as agentName}
-              <li class="entity-card">
-                <a href="/crew/{crew.name}/agent/{agentName}" class="entity-link" title={agentName}>
-                  <div class="entity-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                  </div>
-                  <span class="entity-name">{agentName}</span>
-                </a>
-              </li>
-            {/each}
-          </ul>
-        {:else}
-          <div class="empty-state">No agents defined for this crew</div>
-        {/if}
-      </section>
+    <!-- New Run Section -->
+    <section class="run-section">
+      <div class="section-header">
+        <h2>Run Crew</h2>
+      </div>
       
-      <section class="info-section">
-        <h2>Tasks</h2>
-        <div class="section-header">
-          <button class="add-button" on:click={() => showTaskForm = true}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            Add Task
-          </button>
-        </div>
-        {#if crew.tasks && Object.keys(crew.tasks).length > 0}
-          <ul class="entity-list">
-            {#each Object.keys(crew.tasks) as taskName}
-              <li class="entity-card">
-                <a href="/crew/{crew.name}/task/{taskName}" class="entity-link" title={taskName}>
-                  <div class="entity-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M9 11l3 3L22 4"></path>
-                      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                    </svg>
-                  </div>
-                  <span class="entity-name">{taskName}</span>
-                </a>
-              </li>
-            {/each}
-          </ul>
+      <div class="run-content">
+        {#if (crew.process && crew.process.crew && crew.process.crew.agents && crew.process.crew.tasks && Object.keys(crew.process.crew.agents).length > 0 && Object.keys(crew.process.crew.tasks).length > 0)}
+          <div class="run-ready">
+            <button 
+              class="run-button"
+              on:click={() => goto(`/crew/${crew.name}/runtime`)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              Run Crew
+            </button>
+          </div>
         {:else}
-          <div class="empty-state">No tasks defined for this crew</div>
+          <div class="run-requirements-compact">
+            <div class="warning-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+            </div>
+            <div class="requirements-content">
+              <p>Required to run: At least one <span class="missing">agent</span> needs to be defined in the workflow with at least one <span class="missing">input</span>.
+              </p>
+            </div>
+          </div>
         {/if}
-      </section>
-    </div>
-     <!-- New Run Section -->
-     <section class="run-section">
-        <div class="section-header">
-          <h2>Run Crew</h2>
-        </div>
-        
-        <div class="run-content">
-          {#if (crew.process && crew.process.crew && crew.process.crew.agents && crew.process.crew.tasks && Object.keys(crew.process.crew.agents).length > 0 && Object.keys(crew.process.crew.tasks).length > 0)}
-            <div class="run-ready">
-              <button 
-                class="run-button"
-                on:click={() => goto(`/crew/${crew.name}/runtime`)}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                </svg>
-                Run Crew
-              </button>
-            </div>
-          {:else}
-            <div class="run-requirements-compact">
-              <div class="warning-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="8" x2="12" y2="12"></line>
-                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                </svg>
-              </div>
-              <div class="requirements-content">
-                <p>Required to run: At least one <span class="missing">agent</span> needs to be defined in the workflow with at least one <span class="missing">input</span>.
-                </p>
-              </div>
-            </div>
-          {/if}
-        </div>
-      </section>
+      </div>
+    </section>
   {/if}
 </main>
 
