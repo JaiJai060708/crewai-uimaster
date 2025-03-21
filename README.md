@@ -1,38 +1,61 @@
-# sv
+# CrewAI UI Master
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A powerful interface for creating and managing AI agents to solve complex problems.
 
-## Creating a project
+## Prerequisites
 
-If you're seeing this, you've probably already done this step. Congrats!
+- Python 3.12+
+- Node.js and npm
+- OpenAI API key
+
+## Environment Setup
+
+1. Create a `.env` file in the root directory with the following:
+
+# env
+OPENAI_API_KEY
+
+## Installation
+
+### Python Dependencies
+
+Install the required Python packages:
 
 ```bash
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
+python3.12 -m pip install -r requirements.txt
 ```
 
-## Developing
+### Frontend Dependencies
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Install Node.js dependencies:
 
 ```bash
+npm install
+```
+
+## Development
+
+Start the development server:
+
+```bash
+# Standard start
 npm run dev
 
-# or start the server and open the app in a new browser tab
+# Start and open in browser automatically
 npm run dev -- --open
 ```
 
-## Building
+## Features
 
-To create a production version of your app:
+- Create and manage AI agents with custom roles and capabilities
+- Orchestrate multiple agents to work together on complex tasks
+- Intuitive UI for monitoring and controlling agent activities
 
-```bash
-npm run build
-```
+## Usage
 
-You can preview the production build with `npm run preview`.
+After starting the development server, navigate to `http://localhost:3000` in your browser to access the CrewAI UI.
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+

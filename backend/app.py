@@ -9,6 +9,12 @@ from contextlib import redirect_stdout
 
 app = Flask(__name__)
 
+CREWS_DIR = "crews_yaml_files"
+
+# if the folder crews does not exist, create it
+if not os.path.exists(os.path.join(os.path.dirname(__file__), CREWS_DIR)):
+    os.makedirs(os.path.join(os.path.dirname(__file__), CREWS_DIR))
+
 @app.route('/api', strict_slashes=False)
 def home():
     return jsonify({"message": "Hello from Flask!"})
@@ -28,7 +34,7 @@ def list_tools():
 @app.route('/api/list-crews', methods=['GET'], strict_slashes=False)
 def list_crews():
     try:
-        crews_path = os.path.join(os.path.dirname(__file__), 'crews')
+        crews_path = os.path.join(os.path.dirname(__file__), CREWS_DIR)
         crews = [d for d in os.listdir(crews_path) if os.path.isdir(os.path.join(crews_path, d))]
         return jsonify(crews)
     except Exception as e:
@@ -36,7 +42,7 @@ def list_crews():
 
 @app.route('/api/crew/<crew_name>/agents', methods=['GET', 'PUT'], strict_slashes=False)
 def crew_agents(crew_name):
-    agents_file = os.path.join(os.path.dirname(__file__), 'crews', crew_name, 'agents.yaml')
+    agents_file = os.path.join(os.path.dirname(__file__), CREWS_DIR, crew_name, 'agents.yaml')
     
     if request.method == 'GET':
         try:
@@ -55,7 +61,7 @@ def crew_agents(crew_name):
     elif request.method == 'PUT':
         try:
             # Ensure crew directory exists
-            crew_dir = os.path.join(os.path.dirname(__file__), 'crews', crew_name)
+            crew_dir = os.path.join(os.path.dirname(__file__), CREWS_DIR, crew_name)
             if not os.path.exists(crew_dir):
                 os.makedirs(crew_dir)
                 
@@ -77,7 +83,7 @@ def crew_agents(crew_name):
 
 @app.route('/api/crew/<crew_name>/tasks', methods=['GET', 'PUT'], strict_slashes=False)
 def crew_tasks(crew_name):
-    tasks_file = os.path.join(os.path.dirname(__file__), 'crews', crew_name, 'tasks.yaml')
+    tasks_file = os.path.join(os.path.dirname(__file__), CREWS_DIR, crew_name, 'tasks.yaml')
     
     if request.method == 'GET':
         try:
@@ -96,7 +102,7 @@ def crew_tasks(crew_name):
     elif request.method == 'PUT':
         try:
             # Ensure crew directory exists
-            crew_dir = os.path.join(os.path.dirname(__file__), 'crews', crew_name)
+            crew_dir = os.path.join(os.path.dirname(__file__), CREWS_DIR, crew_name)
             if not os.path.exists(crew_dir):
                 os.makedirs(crew_dir)
                 
@@ -118,7 +124,7 @@ def crew_tasks(crew_name):
 
 @app.route('/api/crew/<crew_name>/process', methods=['GET', 'PUT'], strict_slashes=False)
 def crew_process(crew_name):
-    process_file = os.path.join(os.path.dirname(__file__), 'crews', crew_name, 'process.yaml')
+    process_file = os.path.join(os.path.dirname(__file__), CREWS_DIR, crew_name, 'process.yaml')
     
     if request.method == 'GET':
         try:
@@ -138,7 +144,7 @@ def crew_process(crew_name):
     elif request.method == 'PUT':
         try:
             # Ensure crew directory exists
-            crew_dir = os.path.join(os.path.dirname(__file__), 'crews', crew_name)
+            crew_dir = os.path.join(os.path.dirname(__file__), CREWS_DIR, crew_name)
             if not os.path.exists(crew_dir):
                 os.makedirs(crew_dir)
                 
@@ -161,7 +167,7 @@ def crew_process(crew_name):
 
 @app.route('/api/crew/<crew_name>', methods=['POST', 'DELETE'], strict_slashes=False)
 def manage_crew(crew_name):
-    crew_dir = os.path.join(os.path.dirname(__file__), 'crews', crew_name)
+    crew_dir = os.path.join(os.path.dirname(__file__), CREWS_DIR, crew_name)
     
     if request.method == 'POST':
         try:
@@ -227,7 +233,7 @@ def manage_crew(crew_name):
 
 @app.route('/api/crew/<crew_name>/run', methods=['POST'], strict_slashes=False)
 def run_crew(crew_name):
-    crew_dir = os.path.join(os.path.dirname(__file__), 'crews', crew_name)
+    crew_dir = os.path.join(os.path.dirname(__file__), CREWS_DIR, crew_name)
 
     try:
         # Load process.yaml
