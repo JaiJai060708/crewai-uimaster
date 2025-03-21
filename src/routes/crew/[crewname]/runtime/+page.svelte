@@ -12,6 +12,7 @@
   let logs = [];
   let finalResult = null;
   let inputVariables = {};
+  let showLogs = true; // New state variable to track logs visibility
   
   // Fetch input variables
   async function fetchInputVariables() {
@@ -209,17 +210,95 @@
     }
   }
   
-  // Auto-scroll to bottom of log container
-  $: if (logs.length) {
+  // Toggle logs visibility with animation
+  function toggleLogs() {
+    const logContainer = document.querySelector('.log-container');
+    const resultContainer = document.querySelector('.result-container');
+    
+    if (showLogs) {
+      // We're about to hide logs and show results
+      if (logContainer) {
+        logContainer.classList.add('animating-out');
+        
+        // Increased from 300ms to 500ms
+        setTimeout(() => {
+          showLogs = false;
+          
+          // Animate the result in
+          if (resultContainer) {
+            resultContainer.classList.add('animating-in');
+            setTimeout(() => {
+              resultContainer.classList.remove('animating-in');
+            }, 500);
+          }
+        }, 500);
+      }
+    } else {
+      // We're about to show logs and hide results
+      if (resultContainer) {
+        resultContainer.classList.add('animating-out');
+        
+        // Increased from 300ms to 500ms
+        setTimeout(() => {
+          showLogs = true;
+          
+          // Animate the logs in and scroll to bottom
+          if (logContainer) {
+            logContainer.classList.add('animating-in');
+            
+            // Ensure scrolling happens after animation
+            setTimeout(() => {
+              logContainer.classList.remove('animating-in');
+              logContainer.scrollTo({
+                top: logContainer.scrollHeight,
+                behavior: 'smooth'
+              });
+            }, 500);
+          }
+        }, 500);
+      }
+    }
+  }
+  
+  // Track when final result is received to trigger animation
+  $: if (finalResult && logs.length > 0) {
+    // Auto-hide logs when result comes in (with animation)
+    // Increased delay from 500ms to 1200ms before starting animation
     setTimeout(() => {
       const logContainer = document.querySelector('.log-container');
-      if (logContainer) {
+      const resultContainer = document.querySelector('.result-container');
+      
+      if (logContainer && showLogs) {
+        logContainer.classList.add('animating-out');
+        
+        // Increased transition delay from 300ms to 500ms
+        setTimeout(() => {
+          showLogs = false;
+          
+          if (resultContainer) {
+            resultContainer.classList.add('animating-in');
+            // Keeping this at 500ms for the final animation cleanup
+            setTimeout(() => {
+              resultContainer.classList.remove('animating-in');
+            }, 500);
+          }
+        }, 500);
+      }
+    }, 1200); // Increased from 500ms to 1200ms for a more noticeable pause
+  }
+  
+  // Auto-scroll to bottom of log container
+  $: if (logs.length) {
+    // Increased from 50ms to 100ms
+    setTimeout(() => {
+      const logContainer = document.querySelector('.log-container');
+      if (logContainer && showLogs) {
         logContainer.scrollTo({
           top: logContainer.scrollHeight,
           behavior: 'smooth'
         });
       }
-    }, 0);
+    }, 100);
   }
   
   onMount(fetchInputVariables);
@@ -319,35 +398,56 @@
       
       <!-- Log output panel -->
       <div class="output-panel">
-        <div class="panel-header">
-          <h2>Execution Log</h2>
-        </div>
-        
-        <div class="log-container">
-          {#if logs.length === 0}
-            <div class="empty-logs">
-              No logs yet. Set input variables and run the crew to see execution logs here.
-            </div>
-          {:else}
-            {#each logs as log}
-              <div class="log-entry {log.type}">
-                {#if log.type === 'system'}
-                  <div class="log-prefix system-prefix">SYSTEM</div>
-                {:else if log.type === 'error'}
-                  <div class="log-prefix error-prefix">ERROR</div>
-                {:else}
-                  <div class="log-prefix">LOG</div>
-                {/if}
-                <div class="log-message">
-                  {@html ansiToHtml(log.message)}
-                </div>
-              </div>
-            {/each}
-          {/if}
-        </div>
-        
         {#if finalResult}
-          <div class="result-container">
+          <div class="logs-toggle-bar" on:click={toggleLogs}>
+            <div class="toggle-button">
+              {#if showLogs}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="18 15 12 9 6 15"></polyline>
+                </svg>
+                Hide Logs
+              {:else}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+                Show Logs
+              {/if}
+            </div>
+            <div class="log-summary">
+              {logs.length} log entries
+            </div>
+          </div>
+        {/if}
+        
+        <!-- Log container with animation classes -->
+        {#if !finalResult || (finalResult && showLogs)}
+          <div class="log-container {finalResult && !showLogs ? 'hidden' : ''}">
+            {#if logs.length === 0}
+              <div class="empty-logs">
+                No logs yet. Set input variables and run the crew to see execution logs here.
+              </div>
+            {:else}
+              {#each logs as log}
+                <div class="log-entry {log.type}">
+                  {#if log.type === 'system'}
+                    <div class="log-prefix system-prefix">SYSTEM</div>
+                  {:else if log.type === 'error'}
+                    <div class="log-prefix error-prefix">ERROR</div>
+                  {:else}
+                    <div class="log-prefix">LOG</div>
+                  {/if}
+                  <div class="log-message">
+                    {@html ansiToHtml(log.message)}
+                  </div>
+                </div>
+              {/each}
+            {/if}
+          </div>
+        {/if}
+        
+        <!-- Result container with animation classes -->
+        {#if finalResult}
+          <div class="result-container {showLogs ? 'hidden' : 'expanded'}">
             <div class="result-header">
               <h3>Final Result</h3>
             </div>
@@ -627,6 +727,7 @@
   
   /* Output panel */
   .output-panel {
+    position: relative;
     background-color: white;
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
@@ -636,6 +737,38 @@
     overflow: hidden;
   }
   
+  /* Log toggle bar animations */
+  .logs-toggle-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    background-color: #f1f5f9;
+    cursor: pointer;
+    border-bottom: 1px solid #e2e8f0;
+    user-select: none;
+    transition: background-color 0.2s;
+    z-index: 5;
+  }
+  
+  .logs-toggle-bar:hover {
+    background-color: #e2e8f0;
+  }
+  
+  .toggle-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: #334155;
+  }
+  
+  .log-summary {
+    font-size: 0.85rem;
+    color: #64748b;
+  }
+  
+  /* Log container with animations */
   .log-container {
     flex: 1;
     overflow-y: auto;
@@ -647,6 +780,24 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  
+  .log-container.animating-out {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  
+  .log-container.animating-in {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fade-slide-down 0.3s forwards;
+  }
+  
+  .log-container.hidden {
+    display: none;
   }
   
   .empty-logs {
@@ -695,8 +846,34 @@
     flex: 1;
   }
   
+  /* Result container with animations */
   .result-container {
     border-top: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  
+  .result-container.animating-out {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  
+  .result-container.animating-in {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fade-slide-up 0.3s forwards;
+  }
+  
+  .result-container.hidden {
+    display: none;
+  }
+  
+  .result-container.expanded .result-content {
+    max-height: calc(100vh - 280px);
+    flex: 1;
   }
   
   .result-header {
@@ -711,6 +888,7 @@
     max-height: 300px;
     overflow: auto;
     background-color: #f8fafc;
+    transition: max-height 0.3s ease;
   }
   
   .result-content pre {
@@ -820,4 +998,27 @@
   .ansi-bg-green { background-color: rgba(46, 204, 113, 0.2); }
   .ansi-bg-yellow { background-color: rgba(241, 196, 15, 0.2); }
   .ansi-bg-blue { background-color: rgba(52, 152, 219, 0.2); }
+  
+  /* Animation keyframes */
+  @keyframes fade-slide-up {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes fade-slide-down {
+    0% {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 </style>
