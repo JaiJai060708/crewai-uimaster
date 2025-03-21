@@ -504,7 +504,7 @@
                 </svg>
               </div>
               <div class="requirements-content">
-                <p>Required to run: At least one <span class="missing">agent</span> needs to be defined in the workflow.
+                <p>Required to run: At least one <span class="missing">agent</span> needs to be defined in the workflow with at least one <span class="missing">input</span>.
                 </p>
               </div>
             </div>

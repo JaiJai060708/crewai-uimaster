@@ -218,6 +218,24 @@
     });
   }
   
+  // Add this new function to extract inputs from description
+  function extractInputs(text) {
+    const regex = /{([^{}]+)}/g;
+    const matches = [];
+    let match;
+    
+    while ((match = regex.exec(text)) !== null) {
+      if (!matches.includes(match[1])) {
+        matches.push(match[1]);
+      }
+    }
+    
+    return matches;
+  }
+  
+  // Reactive declaration to extract inputs whenever description changes
+  $: inputVariables = extractInputs(task.description || '');
+  
   onMount(() => {
     fetchData().then(() => {
       // Initialize textarea resize after data is loaded
@@ -293,7 +311,29 @@
             on:input={autoResizeTextarea}
             required
           ></textarea>
+
           <div class="field-description">Detailed instructions for completing this task</div>
+          
+          <!-- Add input variables display -->
+          {#if inputVariables.length > 0}
+            <div class="input-variables">
+              <div class="input-variables-header">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline>
+                  <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
+                </svg>
+                <span>Input Variables</span>
+              </div>
+              <div class="input-variables-list">
+                {#each inputVariables as variable}
+                  <div class="input-variable-tag">
+                    <span>{variable}</span>
+                  </div>
+                {/each}
+              </div>
+            </div>
+          {/if}
+          
         </div>
         
         <div class="form-group">
@@ -798,5 +838,59 @@
   
   .assigned-agents-info li {
     margin-bottom: 0.25rem;
+  }
+  
+  /* Styling for input variables display */
+  .input-variables {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #f0f7ff;
+    border-radius: 6px;
+    border: 1px solid #bfdbfe;
+    transition: all 0.2s ease;
+  }
+  
+  .input-variables-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: #2563eb;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .input-variables-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .input-variable-tag {
+    background-color: white;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
+    border-radius: 4px;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.9rem;
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Add responsive styling for the input variables section */
+  @media (max-width: 768px) {
+    .input-variables {
+      padding: 0.75rem;
+    }
+    
+    .input-variables-header {
+      font-size: 0.8rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .input-variable-tag {
+      padding: 0.3rem 0.5rem;
+      font-size: 0.8rem;
+    }
   }
 </style>
