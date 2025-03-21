@@ -1,5 +1,0 @@
-crew:
-  agents:
-  - writer_agent
-  process: sequential
-  tasks: []
