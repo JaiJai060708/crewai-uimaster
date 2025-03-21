@@ -255,6 +255,20 @@
                       </div>
                     {/each}
                   </div>
+                  
+                  <!-- Add tools display -->
+                  {#if crew.agents[agentName]?.tools && crew.agents[agentName].tools.length > 0}
+                    <div class="agent-tools">
+                      {#each crew.agents[agentName].tools as tool}
+                        <div class="tool-badge" title={tool}>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                          </svg>
+                          <span>{tool}</span>
+                        </div>
+                      {/each}
+                    </div>
+                  {/if}
                 </div>
                 
                 {#if index < crew.process.crew.agents.length - 1}
@@ -276,18 +290,18 @@
               <div class="unused-agents-section">
                 <h3>Unused Agents</h3>
                 <div class="unused-agents-grid">
-                  {#each Object.keys(crew.agents).filter(agentName => !crew.process.crew.agents.includes(agentName)) as unusedAgentName}
-                    <div class="agent-node unused" on:click={() => goto(`/crew/${crew.name}/taskagent/${unusedAgentName}`)}>
+                    {#each Object.keys(crew.agents).filter(agentName => !crew.process.crew.agents.includes(agentName)) as agentName}
+                    <div class="agent-node unused" on:click={() => goto(`/crew/${crew.name}/taskagent/${agentName}`)}>
                       <div class="agent-icon unused">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                           <circle cx="12" cy="7" r="4"></circle>
                         </svg>
                       </div>
-                      <div class="agent-name" title={unusedAgentName}>{unusedAgentName}</div>
+                      <div class="agent-name" title={agentName}>{agentName}</div>
                       
                       <!-- Add delegation indicator badge if agent can delegate -->
-                      {#if crew.agents[unusedAgentName]?.allow_delegation}
+                      {#if crew.agents[agentName]?.allow_delegation}
                         <div class="delegation-badge unused" title="Can delegate to other agents">
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
@@ -298,17 +312,31 @@
                       {/if}
                       
                       <!-- Add associated tasks display -->
-                      <div class="agent-tasks">
-                        {#each Object.entries(crew.tasks).filter(([_, taskData]) => taskData.agents && taskData.agents.includes(unusedAgentName)) as [taskName, _]}
-                          <div class="task-badge" title={taskName}>
+                        <div class="agent-tasks">
+                        {#each Object.entries(crew.tasks).filter(([_, taskData]) => taskData.agents && taskData.agents.includes(agentName)) as [taskName, _]}
+                            <div class="task-badge" title={taskName}>
                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M9 11l3 3L22 4"></path>
-                              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                                <path d="M9 11l3 3L22 4"></path>
+                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
                             </svg>
                             <span>{taskName}</span>
-                          </div>
+                            </div>
                         {/each}
-                      </div>
+                        </div>
+                        
+                      <!-- Add tools display for unused agents -->
+                        {#if crew.agents[agentName]?.tools && crew.agents[agentName].tools.length > 0}
+                          <div class="agent-tools">
+                            {#each crew.agents[agentName].tools as tool}
+                              <div class="tool-badge" title={tool}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                                </svg>
+                                <span>{tool}</span>
+                              </div>
+                            {/each}
+                          </div>
+                        {/if}
                     </div>
                   {/each}
                 </div>
@@ -327,8 +355,8 @@
                 <p>
                     <span class="process-tag">Hierarchical Process:</span> 
                     A manager agent coordinates multiple worker agents
-                </p>
-                </div>
+              </p>
+            </div>
                 <div class="hierarchical-chart">
                 <div class="manager-tier">
                     <div class="agent-node manager" on:click={() => goto(`/crew/${crew.name}/taskagent/Manager Agent`)}>
@@ -415,6 +443,20 @@
                             </div>
                         {/each}
                         </div>
+                        
+                        <!-- Add tools display -->
+                        {#if crew.agents[agentName]?.tools && crew.agents[agentName].tools.length > 0}
+                          <div class="agent-tools">
+                            {#each crew.agents[agentName].tools as tool}
+                              <div class="tool-badge" title={tool}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                                </svg>
+                                <span>{tool}</span>
+                              </div>
+                            {/each}
+                          </div>
+                        {/if}
                     </div>
                     {/each}
                 </div>
@@ -425,7 +467,7 @@
 
             
             <!-- Add unused agents section -->
-            {#if Object.keys(crew.agents).length > crew.process.crew.agents.length + 1} <!-- +1 for Manager Agent -->
+            {#if Object.keys(crew.agents).length > crew.process.crew.agents.length} <!-- +1 for Manager Agent -->
               <div class="unused-agents-section">
                 <h3>Unused Agents</h3>
                 <div class="unused-agents-grid">
@@ -462,6 +504,20 @@
                           </div>
                         {/each}
                       </div>
+                      
+                      <!-- Add tools display -->
+                      {#if crew.agents[unusedAgentName]?.tools && crew.agents[unusedAgentName].tools.length > 0}
+                        <div class="agent-tools">
+                          {#each crew.agents[unusedAgentName].tools as tool}
+                            <div class="tool-badge" title={tool}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                              </svg>
+                              <span>{tool}</span>
+                            </div>
+                          {/each}
+                        </div>
+                      {/if}
                     </div>
                   {/each}
                 </div>
@@ -515,6 +571,7 @@
                       </div>
                     {/each}
                   </div>
+                  
                 </div>
               {/each}
             </div>
@@ -1794,6 +1851,94 @@
     
     .agent-node.unused:hover {
       transform: scale(0.8) translateY(-3px);
+    }
+  }
+  
+  /* Styles for agent tools display */
+  .agent-tools {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    max-width: 100%;
+  }
+  
+  .tool-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    background-color: #dbeafe;
+    color: #1e40af;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 999px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    cursor: default;
+  }
+  
+  .tool-badge span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Tool badge styling */
+  .agent-tools {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    max-width: 100%;
+  }
+  
+  .tool-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    background-color: #fef3c7;
+    color: #92400e;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 999px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    cursor: default;
+  }
+  
+  .tool-badge span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Update agent node styling to accommodate tools */
+  .agent-node {
+    min-height: 140px;
+  }
+  
+  .agent-node.unused .tool-badge {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+  }
+  
+  @media (max-width: 768px) {
+    .tool-badge {
+      font-size: 0.65rem;
+      padding: 0.2rem 0.4rem;
+    }
+    
+    .agent-tools {
+      flex-direction: column;
+      align-items: center;
     }
   }
 </style>
