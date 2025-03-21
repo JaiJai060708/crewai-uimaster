@@ -393,6 +393,18 @@
       {/if}
     </header>
     
+    <!-- Add the ChatGPT template link -->
+    <div class="template-link-container">
+      <a href="https://chatgpt.com/g/g-67ddbfbc52348191820b9b955ebfcd24-create-an-agent-and-a-task-for-crew-ai" target="_blank" rel="noopener noreferrer" class="template-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <line x1="10" y1="14" x2="21" y2="3"></line>
+        </svg>
+        Create ChatGPT Agent Template Helper
+      </a>
+    </div>
+    
     {#if deleteConfirmOpen}
       <div class="modal-overlay">
         <div class="modal-content delete-confirmation">
@@ -1482,5 +1494,46 @@
     @keyframes fadeOut {
       from { opacity: 1; }
       to { opacity: 0; }
+    }
+    
+    /* Add template link styles */
+    .template-link-container {
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    
+    .template-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.8rem 1.4rem;
+      background-color: #10a37f;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(16, 163, 127, 0.2);
+    }
+    
+    .template-link:hover {
+      background-color: #0d866a;
+      box-shadow: 0 4px 12px rgba(16, 163, 127, 0.3);
+      transform: translateY(-1px);
+    }
+    
+    .template-link:active {
+      transform: translateY(0);
+    }
+    
+    @media (max-width: 768px) {
+      .template-link-container {
+        margin-bottom: 1.5rem;
+      }
+      
+      .template-link {
+        padding: 0.7rem 1.2rem;
+        font-size: 0.9rem;
+      }
     }
   </style>   
