@@ -17,9 +17,12 @@
   let error = null;
   let saveSuccess = false;
   
-  // Available agents and tasks in the crew
-  let availableAgents = [];
-  let availableTasks = [];
+  // Replace these two variables
+  // let availableAgents = [];
+  // let availableTasks = [];
+
+  // With a single structure that contains both agent and task pairs
+  let availableAgentTasks = [];
   
   // Fetch process data
   async function fetchProcessData() {
@@ -58,11 +61,8 @@
       // Create a deep copy of the original process data
       originalProcess = JSON.parse(JSON.stringify(process));
       
-      // Fetch available agents
-      await fetchAvailableAgents();
-      
-      // Fetch available tasks
-      await fetchAvailableTasks();
+      // Fetch available agent-task pairs
+      await fetchAvailableAgentTasks();
       
     } catch (err) {
       error = err.message;
@@ -72,33 +72,31 @@
     }
   }
   
-  // Fetch available agents
-  async function fetchAvailableAgents() {
-    try {
-      const agentsResponse = await fetch(`/api/crew/${crewName}/agents`);
-      if (!agentsResponse.ok) throw new Error('Failed to fetch crew agents');
-      const agentsData = await agentsResponse.json();
-      
-      if (agentsData.agents) {
-        availableAgents = Object.keys(agentsData.agents);
-      }
-    } catch (err) {
-      console.error('Error fetching available agents:', err);
-    }
-  }
-  
-  // Fetch available tasks
-  async function fetchAvailableTasks() {
+  // New unified function to fetch agent-task pairs
+  async function fetchAvailableAgentTasks() {
     try {
       const tasksResponse = await fetch(`/api/crew/${crewName}/tasks`);
       if (!tasksResponse.ok) throw new Error('Failed to fetch crew tasks');
       const tasksData = await tasksResponse.json();
       
       if (tasksData.tasks) {
-        availableTasks = Object.keys(tasksData.tasks);
+        // Reset the available agent-task pairs
+        availableAgentTasks = [];
+        
+        // Loop through all tasks to extract agent associations
+        Object.entries(tasksData.tasks).forEach(([taskName, taskData]) => {
+          // Only include tasks that have at least one agent defined
+          if (taskData.agents) {
+            //  create an agent-task pair
+              availableAgentTasks.push({
+                agent: taskData.agents,
+                task: taskName
+              });
+          }
+        });
       }
     } catch (err) {
-      console.error('Error fetching available tasks:', err);
+      console.error('Error fetching available agent-task pairs:', err);
     }
   }
   
@@ -244,17 +242,18 @@
     process = { ...process }; // Trigger reactivity
   }
   
-  // Add agent to process
+  // Modify the addAgent function to use the availableAgentTasks
   function addAgent(agent) {
     if (!process.agents.includes(agent)) {
+      // Find the associated task for this agent
+      const agentTaskPair = availableAgentTasks.find(pair => pair.agent === agent);
+      
+      // Use the associated task if found, otherwise use empty string
+      const task = agentTaskPair ? agentTaskPair.task : '';
+      
+      // Add the agent and its associated task
       process.agents.push(agent);
-      
-      // Find and add the associated task if available
-      const taskIndex = availableTasks.indexOf(agent);
-      if (taskIndex !== -1 && !process.tasks.includes(agent)) {
-        process.tasks.push(agent);
-      }
-      
+      process.tasks.push(task);
       process = { ...process }; // Trigger reactivity
     }
   }
@@ -379,9 +378,9 @@
             <div class="add-item-container">
               <select id="agent-select" class="item-select">
                 <option value="" disabled selected>Select an agent to add</option>
-                {#each availableAgents as agent}
-                  {#if !process.agents.includes(agent)}
-                    <option value={agent}>{agent}</option>
+                {#each availableAgentTasks as pair}
+                  {#if !process.agents.includes(pair.agent)}
+                    <option value={pair.agent}>{pair.agent}</option>
                   {/if}
                 {/each}
               </select>
@@ -389,10 +388,10 @@
                 type="button" 
                 class="add-btn"
                 on:click={() => {
-                  const select = document.getElementById('agent-select');
-                  if (select.value) {
-                    addAgent(select.value);
-                    select.value = '';
+                  const agentSelect = document.getElementById('agent-select');
+                  if (agentSelect.value) {
+                    addAgent(agentSelect.value);
+                    agentSelect.value = '';
                   }
                 }}
               >
@@ -403,9 +402,6 @@
                 Add
               </button>
             </div>
-          </div>
-          <div class="field-description">Select agents and arrange them in the desired order. Associated tasks will be synchronized automatically.</div>
-        </div>
         
         <div class="form-group">
           <label>Input Variables</label>
