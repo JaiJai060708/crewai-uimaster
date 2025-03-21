@@ -408,6 +408,8 @@
       {/if}
     </section>
     
+   
+    
     <div class="two-column-layout">
       <section class="info-section">
         <h2>Agents</h2>
@@ -473,6 +475,42 @@
         {/if}
       </section>
     </div>
+     <!-- New Run Section -->
+     <section class="run-section">
+        <div class="section-header">
+          <h2>Run Crew</h2>
+        </div>
+        
+        <div class="run-content">
+          {#if (crew.process && crew.process.crew && crew.process.crew.agents && crew.process.crew.tasks && Object.keys(crew.process.crew.agents).length > 0 && Object.keys(crew.process.crew.tasks).length > 0)}
+            <div class="run-ready">
+              <button 
+                class="run-button"
+                on:click={() => goto(`/crew/${crew.name}/runtime`)}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                Run Crew
+              </button>
+            </div>
+          {:else}
+            <div class="run-requirements-compact">
+              <div class="warning-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+              </div>
+              <div class="requirements-content">
+                <p>Required to run: At least one <span class="missing">agent</span> needs to be defined in the workflow.
+                </p>
+              </div>
+            </div>
+          {/if}
+        </div>
+      </section>
   {/if}
 </main>
 
@@ -1513,5 +1551,100 @@
   .btn-danger:disabled {
     background-color: #fca5a5;
     cursor: not-allowed;
+  }
+  
+  /* Run Section Styles */
+  .run-section {
+    border-top: 4px solid #16a34a;
+    text-align: center;
+  }
+  
+  .run-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem;
+  }
+  
+  .run-description {
+    font-size: 1.1rem;
+    color: #334155;
+    margin-bottom: 2rem;
+  }
+  
+  .run-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    background-color: #16a34a;
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
+  }
+  
+  .run-button:hover {
+    background-color: #15803d;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(22, 163, 74, 0.3);
+  }
+  
+  .run-button:active {
+    transform: translateY(0);
+  }
+  
+  .run-requirements {
+    background-color: #f8fafc;
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  
+  .requirements-list {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0;
+    text-align: left;
+  }
+  
+  .requirements-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    font-size: 1rem;
+  }
+  
+  .fulfilled {
+    color: #16a34a;
+  }
+  
+  .missing {
+    color: #ef4444;
+  }
+  
+  .missing-text {
+    font-size: 0.9rem;
+    color: #64748b;
+    font-style: italic;
+  }
+  
+  @media (max-width: 768px) {
+    .run-button {
+      width: 100%;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+    }
+    
+    .run-requirements {
+      padding: 1.5rem;
+    }
   }
 </style>
