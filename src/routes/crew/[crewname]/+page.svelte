@@ -187,19 +187,20 @@
   {:else}
     <section class="workflow-section">
       <div class="section-header">
-        <h2>Workflow</h2>
+        <h2>Team Structure</h2>
         <a href="/crew/{crew.name}/process" class="edit-button">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
           </svg>
-          Edit Workflow
+          Edit Team Structure
         </a>
       </div>
       
       {#if crew.process?.crew?.process?.toLowerCase() === 'sequential'}
         <div class="sequential-workflow">
-          {#if crew.process?.crew?.agents && crew.process.crew.agents.length > 0}
+          {#if crew.agents && Object.keys(crew.agents).length > 0}
+          {#if crew.process?.crew?.agents && crew.process?.crew?.agents.length > 0}
             <div class="process-description">
               <p>
                 <span class="process-tag">Sequential Process:</span> 
@@ -266,49 +267,245 @@
                 {/if}
               {/each}
             </div>
+            {:else  }
+              <div class="empty-state">No agents defined for this team</div>
+            {/if}
+            
+            <!-- Add unused agents section -->
+            {#if Object.keys(crew.agents).length > crew.process.crew.agents.length}
+              <div class="unused-agents-section">
+                <h3>Unused Agents</h3>
+                <div class="unused-agents-grid">
+                  {#each Object.keys(crew.agents).filter(agentName => !crew.process.crew.agents.includes(agentName)) as unusedAgentName}
+                    <div class="agent-node unused">
+                      <div class="agent-icon unused">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                      </div>
+                      <div class="agent-name" title={unusedAgentName}>{unusedAgentName}</div>
+                      
+                      <!-- Add delegation indicator badge if agent can delegate -->
+                      {#if crew.agents[unusedAgentName]?.allow_delegation}
+                        <div class="delegation-badge unused" title="Can delegate to other agents">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                          </svg>
+                          <span>Delegator</span>
+                        </div>
+                      {/if}
+                      
+                      <!-- Add associated tasks display -->
+                      <div class="agent-tasks">
+                        {#each Object.entries(crew.tasks).filter(([_, taskData]) => taskData.agents && taskData.agents.includes(unusedAgentName)) as [taskName, _]}
+                          <div class="task-badge" title={taskName}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M9 11l3 3L22 4"></path>
+                              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                            </svg>
+                            <span>{taskName}</span>
+                          </div>
+                        {/each}
+                      </div>
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            {/if}
           {:else}
-            <div class="empty-state">No agents defined for this workflow</div>
+            <div class="empty-state">No agents defined for this team</div>
           {/if}
         </div>
       
       {:else if crew.process?.crew?.process?.toLowerCase() === 'hierarchical'}
         <div class="hierarchical-workflow">
-          {#if crew.process?.crew?.agents && crew.process.crew.agents.length > 0}
-            <div class="process-description">
-              <p>
-                <span class="process-tag">Hierarchical Process:</span> 
-                A manager agent coordinates multiple worker agents
-              </p>
-            </div>
-            <div class="hierarchical-chart">
-              <div class="manager-tier">
-                <div class="agent-node manager">
-                  <div class="role-label">Manager</div>
-                  <div class="agent-icon">
+          {#if crew.agents && Object.keys(crew.agents).length > 0}
+            {#if crew.process?.crew?.agents && crew.process?.crew?.agents.length > 0}
+                <div class="process-description">
+                <p>
+                    <span class="process-tag">Hierarchical Process:</span> 
+                    A manager agent coordinates multiple worker agents
+                </p>
+                </div>
+                <div class="hierarchical-chart">
+                <div class="manager-tier">
+                    <div class="agent-node manager">
+                    <div class="role-label">Manager</div>
+                    <div class="agent-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </div>
+                    <div class="agent-name" title="Manager Agent">Manager Agent</div>
+                    
+                    <!-- Add delegation indicator badge if manager can delegate -->
+                    {#if crew.agents["Manager Agent"]?.allow_delegation}
+                        <div class="delegation-badge hierarchical" title="Can delegate to all workers">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <span>Delegator</span>
+                        </div>
+                        
+                        <!-- Add pulsing delegation aura for manager -->
+                        <div class="delegation-aura"></div>
+                    {/if}
+                    
+                    <!-- Add associated tasks display for manager -->
+                    <div class="agent-tasks">
+                        {#each Object.entries(crew.tasks).filter(([_, taskData]) => taskData.agents && taskData.agents.includes("Manager Agent")) as [taskName, _]}
+                        <div class="task-badge" title={taskName}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 11l3 3L22 4"></path>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                            </svg>
+                            <span>{taskName}</span>
+                        </div>
+                        {/each}
+                    </div>
+                    </div>
+                </div>
+                
+                <div class="connector-vertical">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <polyline points="19 12 12 19 5 12"></polyline>
+                    </svg>
+                </div>
+                
+                <div class="workers-tier">
+                    {#each crew.process.crew.agents as agentName, index}
+                    <div class="agent-node worker">
+                        <div class="role-label">Worker</div>
+                        <div class="agent-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        </div>
+                        <div class="agent-name" title={agentName}>{agentName}</div>
+                        
+                        <!-- Add delegation indicator badge if worker can delegate -->
+                        {#if crew.agents[agentName]?.allow_delegation}
+                        <div class="delegation-badge worker" title="Can delegate to other workers">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                            <span>Delegator</span>
+                        </div>
+                        
+                        <!-- Add pulsing delegation aura for workers who can delegate -->
+                        <div class="delegation-aura worker"></div>
+                        {/if}
+                        
+                        <!-- Add associated tasks display for worker -->
+                        <div class="agent-tasks">
+                        {#each Object.entries(crew.tasks).filter(([_, taskData]) => taskData.agents && taskData.agents.includes(agentName)) as [taskName, _]}
+                            <div class="task-badge" title={taskName}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 11l3 3L22 4"></path>
+                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                            </svg>
+                            <span>{taskName}</span>
+                            </div>
+                        {/each}
+                        </div>
+                    </div>
+                    {/each}
+                </div>
+              </div>
+            {:else}
+              <div class="empty-state">No agents defined for this team</div>
+            {/if}
+
+            
+            <!-- Add unused agents section -->
+            {#if Object.keys(crew.agents).length > crew.process.crew.agents.length + 1} <!-- +1 for Manager Agent -->
+              <div class="unused-agents-section">
+                <h3>Unused Agents</h3>
+                <div class="unused-agents-grid">
+                  {#each Object.keys(crew.agents).filter(agentName => !crew.process.crew.agents.includes(agentName) && agentName !== "Manager Agent") as unusedAgentName}
+                    <div class="agent-node unused">
+                      <div class="agent-icon unused">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                      </div>
+                      <div class="agent-name" title={unusedAgentName}>{unusedAgentName}</div>
+                      
+                      <!-- Add delegation indicator badge if agent can delegate -->
+                      {#if crew.agents[unusedAgentName]?.allow_delegation}
+                        <div class="delegation-badge unused" title="Can delegate to other agents">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                          </svg>
+                          <span>Delegator</span>
+                        </div>
+                      {/if}
+                      
+                      <!-- Add associated tasks display -->
+                      <div class="agent-tasks">
+                        {#each Object.entries(crew.tasks).filter(([_, taskData]) => taskData.agents && taskData.agents.includes(unusedAgentName)) as [taskName, _]}
+                          <div class="task-badge" title={taskName}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M9 11l3 3L22 4"></path>
+                              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                            </svg>
+                            <span>{taskName}</span>
+                          </div>
+                        {/each}
+                      </div>
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            {/if}
+          {:else}
+            <div class="empty-state">No agents defined for this team</div>
+          {/if}
+        </div>
+      
+      {:else}
+        <div class="empty-state">
+          <p>Team structure not defined or uses an unknown process type.</p>
+        </div>
+        
+        <!-- Show all agents when no workflow is defined -->
+        {#if Object.keys(crew.agents).length > 0}
+          <div class="unused-agents-section">
+            <h3>Unused Agents</h3>
+            <div class="unused-agents-grid">
+              {#each Object.keys(crew.agents) as agentName}
+                <div class="agent-node unused">
+                  <div class="agent-icon unused">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                       <circle cx="12" cy="7" r="4"></circle>
                     </svg>
                   </div>
-                  <div class="agent-name" title="Manager Agent">Manager Agent</div>
+                  <div class="agent-name" title={agentName}>{agentName}</div>
                   
-                  <!-- Add delegation indicator badge if manager can delegate -->
-                  {#if crew.agents["Manager Agent"]?.allow_delegation}
-                    <div class="delegation-badge hierarchical" title="Can delegate to all workers">
+                  <!-- Add delegation indicator badge if agent can delegate -->
+                  {#if crew.agents[agentName]?.allow_delegation}
+                    <div class="delegation-badge unused" title="Can delegate to other agents">
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                         <polyline points="22 4 12 14.01 9 11.01"></polyline>
                       </svg>
                       <span>Delegator</span>
                     </div>
-                    
-                    <!-- Add pulsing delegation aura for manager -->
-                    <div class="delegation-aura"></div>
                   {/if}
                   
-                  <!-- Add associated tasks display for manager -->
+                  <!-- Add associated tasks display -->
                   <div class="agent-tasks">
-                    {#each Object.entries(crew.tasks).filter(([_, taskData]) => taskData.agents && taskData.agents.includes("Manager Agent")) as [taskName, _]}
+                    {#each Object.entries(crew.tasks).filter(([_, taskData]) => taskData.agents && taskData.agents.includes(agentName)) as [taskName, _]}
                       <div class="task-badge" title={taskName}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M9 11l3 3L22 4"></path>
@@ -319,66 +516,10 @@
                     {/each}
                   </div>
                 </div>
-              </div>
-              
-              <div class="connector-vertical">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <polyline points="19 12 12 19 5 12"></polyline>
-                </svg>
-              </div>
-              
-              <div class="workers-tier">
-                {#each crew.process.crew.agents as agentName, index}
-                  <div class="agent-node worker">
-                    <div class="role-label">Worker</div>
-                    <div class="agent-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                      </svg>
-                    </div>
-                    <div class="agent-name" title={agentName}>{agentName}</div>
-                    
-                    <!-- Add delegation indicator badge if worker can delegate -->
-                    {#if crew.agents[agentName]?.allow_delegation}
-                      <div class="delegation-badge worker" title="Can delegate to other workers">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                          <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                        </svg>
-                        <span>Delegator</span>
-                      </div>
-                      
-                      <!-- Add pulsing delegation aura for workers who can delegate -->
-                      <div class="delegation-aura worker"></div>
-                    {/if}
-                    
-                    <!-- Add associated tasks display for worker -->
-                    <div class="agent-tasks">
-                      {#each Object.entries(crew.tasks).filter(([_, taskData]) => taskData.agents && taskData.agents.includes(agentName)) as [taskName, _]}
-                        <div class="task-badge" title={taskName}>
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M9 11l3 3L22 4"></path>
-                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                          </svg>
-                          <span>{taskName}</span>
-                        </div>
-                      {/each}
-                    </div>
-                  </div>
-                {/each}
-              </div>
+              {/each}
             </div>
-          {:else}
-            <div class="empty-state">No agents defined for this workflow</div>
-          {/if}
-        </div>
-      
-      {:else}
-        <div class="empty-state">
-          <p>Workflow structure not defined or uses an unknown process type.</p>
-        </div>
+          </div>
+        {/if}
       {/if}
       <button class="add-button" on:click={() => showAgentForm = true}>
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -418,7 +559,7 @@
               </svg>
             </div>
             <div class="requirements-content">
-              <p>Required to run: At least one <span class="missing">agent</span> needs to be defined in the workflow with at least one <span class="missing">input</span>.
+              <p>Required to run: At least one <span class="missing">agent</span> needs to be defined in the team with at least one <span class="missing">input</span>.
               </p>
             </div>
           </div>
@@ -1559,6 +1700,99 @@
     
     .run-requirements {
       padding: 1.5rem;
+    }
+  }
+  
+  /* Update the unused-agents-section styling */
+  .unused-agents-section {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px dashed #cbd5e1;
+    width: 100%;
+  }
+  
+  .unused-agents-section h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: #475569;
+    text-align: center;
+  }
+  
+  .unused-agents-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.25rem;
+    width: 100%;
+    padding: 1rem;
+    background-color: #f8fafc;
+    border-radius: 12px;
+  }
+  
+  /* Update the unused agent node styling to be even smaller */
+  .agent-node.unused {
+    transform: scale(0.8);
+    background-color: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-style: dashed;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s, border-style 0.2s;
+    opacity: 0.85;
+    min-width: 130px;
+    padding: 1.2rem 0.8rem;
+  }
+  
+  .agent-node.unused:hover {
+    transform: scale(0.85) translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+    border-color: #38bdf8;
+    border-style: solid;
+    opacity: 1;
+  }
+  
+  .agent-icon.unused {
+    width: 40px;
+    height: 40px;
+    background-color: #e0f2fe;
+    color: #0284c7;
+    opacity: 0.8;
+    margin-bottom: 0.75rem;
+  }
+  
+  .agent-node.unused .agent-name {
+    font-size: 0.9rem;
+  }
+  
+  .agent-node.unused .task-badge {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+  }
+  
+  .delegation-badge.unused {
+    background-color: #94a3b8;
+    box-shadow: 0 2px 4px rgba(148, 163, 184, 0.3);
+    transform: scale(0.8);
+    right: -12px;
+    top: -12px;
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+  }
+  
+  /* Responsive adjustments for even smaller unused agents */
+  @media (max-width: 768px) {
+    .unused-agents-grid {
+      padding: 1rem 0.5rem;
+      gap: 0.75rem;
+    }
+    
+    .agent-node.unused {
+      transform: scale(0.75);
+      min-width: 120px;
+    }
+    
+    .agent-node.unused:hover {
+      transform: scale(0.8) translateY(-3px);
     }
   }
 </style>
