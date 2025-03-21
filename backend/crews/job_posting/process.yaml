@@ -1,8 +1,5 @@
 crew:
   agents:
-  - research_agent
   - writer_agent
-  process: hierarchical
-  tasks:
-  - industry_analysis_task
-  - research_company_culture_task
+  process: sequential
+  tasks: []

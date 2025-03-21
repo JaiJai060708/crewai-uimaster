@@ -207,11 +207,27 @@
       const temp = array[index];
       array[index] = array[index - 1];
       array[index - 1] = temp;
+      
+      // Also move the associated task
+      if (array === process.agents && process.tasks.length > index) {
+        const tempTask = process.tasks[index];
+        process.tasks[index] = process.tasks[index - 1];
+        process.tasks[index - 1] = tempTask;
+      }
+      
       process = { ...process }; // Trigger reactivity
     } else if (direction === 'down' && index < array.length - 1) {
       const temp = array[index];
       array[index] = array[index + 1];
       array[index + 1] = temp;
+      
+      // Also move the associated task
+      if (array === process.agents && process.tasks.length > index) {
+        const tempTask = process.tasks[index];
+        process.tasks[index] = process.tasks[index + 1];
+        process.tasks[index + 1] = tempTask;
+      }
+      
       process = { ...process }; // Trigger reactivity
     }
   }
@@ -219,6 +235,12 @@
   // Remove item from array
   function removeItem(array, index) {
     array.splice(index, 1);
+    
+    // Also remove the associated task
+    if (array === process.agents && process.tasks.length > index) {
+      process.tasks.splice(index, 1);
+    }
+    
     process = { ...process }; // Trigger reactivity
   }
   
@@ -226,14 +248,13 @@
   function addAgent(agent) {
     if (!process.agents.includes(agent)) {
       process.agents.push(agent);
-      process = { ...process }; // Trigger reactivity
-    }
-  }
-  
-  // Add task to process
-  function addTask(task) {
-    if (!process.tasks.includes(task)) {
-      process.tasks.push(task);
+      
+      // Find and add the associated task if available
+      const taskIndex = availableTasks.indexOf(agent);
+      if (taskIndex !== -1 && !process.tasks.includes(agent)) {
+        process.tasks.push(agent);
+      }
+      
       process = { ...process }; // Trigger reactivity
     }
   }
@@ -383,71 +404,7 @@
               </button>
             </div>
           </div>
-          <div class="field-description">Select agents and arrange them in the desired order</div>
-        </div>
-        
-        <div class="form-group">
-          <label>Tasks</label>
-          <div class="ordered-list-container">
-            {#if process.tasks.length === 0}
-              <div class="empty-list">No tasks selected</div>
-            {:else}
-              <div class="ordered-list">
-                {#each process.tasks as task, index}
-                  <div class="ordered-item">
-                    <div class="item-name">{task}</div>
-                    <div class="item-actions">
-                      <button type="button" on:click={() => moveItem(process.tasks, index, 'up')} disabled={index === 0}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <polyline points="18 15 12 9 6 15"></polyline>
-                        </svg>
-                      </button>
-                      <button type="button" on:click={() => moveItem(process.tasks, index, 'down')} disabled={index === process.tasks.length - 1}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                      </button>
-                      <button type="button" on:click={() => removeItem(process.tasks, index)} class="remove-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                {/each}
-              </div>
-            {/if}
-            
-            <div class="add-item-container">
-              <select id="task-select" class="item-select">
-                <option value="" disabled selected>Select a task to add</option>
-                {#each availableTasks as task}
-                  {#if !process.tasks.includes(task)}
-                    <option value={task}>{task}</option>
-                  {/if}
-                {/each}
-              </select>
-              <button 
-                type="button" 
-                class="add-btn"
-                on:click={() => {
-                  const select = document.getElementById('task-select');
-                  if (select.value) {
-                    addTask(select.value);
-                    select.value = '';
-                  }
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                Add
-              </button>
-            </div>
-          </div>
-          <div class="field-description">Select tasks and arrange them in the desired order</div>
+          <div class="field-description">Select agents and arrange them in the desired order. Associated tasks will be synchronized automatically.</div>
         </div>
         
         <div class="form-group">

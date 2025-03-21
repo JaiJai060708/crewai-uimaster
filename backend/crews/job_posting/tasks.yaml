@@ -34,6 +34,7 @@ industry_analysis_task:
 
     '
 research_company_culture_task:
+  agents: writer_agent
   description: 'Analyze the provided company website and the hiring manager''s company''s
     domain {company_domain}, description {company_description}. Focus on understanding
     the company''s culture, values, and mission. Identify unique selling points and
@@ -47,6 +48,7 @@ research_company_culture_task:
     on incorporating these insights into the job posting should be included.
 
     '
+  number_iterations: 1
 research_role_requirements_task:
   description: 'Based on the hiring manager''s needs: {hiring_needs}, identify the
     key skills, experiences, and qualities the ideal candidate should possess for
