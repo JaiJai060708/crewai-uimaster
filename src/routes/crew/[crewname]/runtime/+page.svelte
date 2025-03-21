@@ -99,6 +99,45 @@
     return text;
   }
   
+  // Parse markdown to HTML
+  function markdownToHtml(markdown) {
+    if (!markdown) return '';
+    
+    // Simple markdown parser for common elements
+    let html = markdown;
+    
+    // Headers
+    html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+    html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+    html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+    
+    // Bold and italic
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    
+    // Lists
+    html = html.replace(/^\s*\*\s+(.*$)/gim, '<li>$1</li>');
+    html = html.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+    
+    // Numbered lists
+    html = html.replace(/^\s*\d+\.\s+(.*$)/gim, '<li>$1</li>');
+    html = html.replace(/(<li>.*<\/li>)/gs, '<ol>$1</ol>');
+    
+    // Links
+    html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>');
+    
+    // Code blocks
+    html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+    
+    // Inline code
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    
+    // Line breaks
+    html = html.replace(/\n/g, '<br>');
+    
+    return html;
+  }
+  
   // Run the crew
   async function runCrew() {
     isRunning = true;
@@ -175,7 +214,10 @@
     setTimeout(() => {
       const logContainer = document.querySelector('.log-container');
       if (logContainer) {
-        logContainer.scrollTop = logContainer.scrollHeight;
+        logContainer.scrollTo({
+          top: logContainer.scrollHeight,
+          behavior: 'smooth'
+        });
       }
     }, 0);
   }
@@ -310,7 +352,9 @@
               <h3>Final Result</h3>
             </div>
             <div class="result-content">
-              <pre>{finalResult}</pre>
+              <div class="markdown-result">
+                {@html markdownToHtml(finalResult)}
+              </div>
             </div>
           </div>
         {/if}
@@ -676,6 +720,60 @@
     white-space: pre-wrap;
     word-break: break-word;
     line-height: 1.6;
+    background-color: #f1f5f9;
+    padding: 1rem;
+    border-radius: 6px;
+  }
+  
+  .markdown-result {
+    line-height: 1.6;
+    color: #334155;
+  }
+  
+  .markdown-result h1, 
+  .markdown-result h2, 
+  .markdown-result h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .markdown-result h1 {
+    font-size: 1.8rem;
+  }
+  
+  .markdown-result h2 {
+    font-size: 1.5rem;
+  }
+  
+  .markdown-result h3 {
+    font-size: 1.2rem;
+  }
+  
+  .markdown-result ul, 
+  .markdown-result ol {
+    padding-left: 1.5rem;
+    margin: 1rem 0;
+  }
+  
+  .markdown-result li {
+    margin-bottom: 0.5rem;
+  }
+  
+  .markdown-result a {
+    color: #3b82f6;
+    text-decoration: none;
+  }
+  
+  .markdown-result a:hover {
+    text-decoration: underline;
+  }
+  
+  .markdown-result code {
+    font-family: "Menlo", "Monaco", "Courier New", monospace;
+    background-color: #f1f5f9;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.85em;
   }
   
   @media (max-width: 768px) {
