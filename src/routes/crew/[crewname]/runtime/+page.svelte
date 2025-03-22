@@ -364,6 +364,28 @@
     }
   }
   
+  // Add a function to copy result to clipboard
+  async function copyResultToClipboard() {
+    if (!finalResult) return;
+    
+    try {
+      await navigator.clipboard.writeText(finalResult);
+      
+      // Show a temporary success message
+      const copyButton = document.querySelector('.copy-button');
+      if (copyButton) {
+        const originalText = copyButton.innerHTML;
+        copyButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+        
+        setTimeout(() => {
+          copyButton.innerHTML = originalText;
+        }, 2000);
+      }
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
+    }
+  }
+  
   onMount(() => {
     fetchInputVariables();
     
@@ -558,6 +580,13 @@
           <div class="result-container {showLogs ? 'hidden' : 'expanded'}">
             <div class="result-header">
               <h3>Final Result</h3>
+              <button class="copy-button" on:click={copyResultToClipboard}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                Copy
+              </button>
             </div>
             <div class="result-content">
               <div class="markdown-result">
@@ -982,6 +1011,20 @@
   .result-container.expanded .result-content {
     max-height: calc(100vh - 280px);
     flex: 1;
+    overflow-y: auto;
+  }
+  
+  .result-container.expanded .result-content {
+    max-height: calc(100vh - 280px);
+    flex: 1;
+  }
+  
+  .result-content {
+    padding: 1.5rem;
+    max-height: 300px;
+    overflow-y: auto;
+    background-color: #f8fafc;
+    transition: max-height 0.3s ease;
   }
   
   .result-header {
@@ -989,12 +1032,13 @@
     background-color: #f1f5f9;
     display: flex;
     align-items: center;
+    justify-content: space-between;
   }
   
   .result-content {
     padding: 1.5rem;
     max-height: 300px;
-    overflow: auto;
+    overflow-y: auto;
     background-color: #f8fafc;
     transition: max-height 0.3s ease;
   }
@@ -1275,5 +1319,31 @@
   
   .send-response-btn:hover {
     background-color: #0284c7;
+  }
+  
+  /* Add styling for the copy button */
+  .copy-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background-color: #f8fafc;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .copy-button:hover {
+    background-color: #f1f5f9;
+    border-color: #94a3b8;
+    color: #334155;
+  }
+  
+  .copy-button:active {
+    transform: translateY(1px);
   }
 </style>
