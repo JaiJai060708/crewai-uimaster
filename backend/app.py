@@ -1,11 +1,14 @@
-from flask import Flask, jsonify, request, Response
 import os
 import yaml
-from crewai_helpers import run_crewai
 import queue
 import threading
 import json
+
+from flask import Flask, jsonify, request, Response
 from contextlib import redirect_stdout
+
+from human_input_tool import input_queues
+from crewai_helpers import run_crewai
 
 app = Flask(__name__)
 
@@ -236,45 +239,45 @@ def run_crew(crew_name):
     crew_dir = os.path.join(os.path.dirname(__file__), CREWS_DIR, crew_name)
 
     try:
-        # Load process.yaml
+        # Load process.yaml, agents.yaml, tasks.yaml as before
         process_file = os.path.join(crew_dir, 'process.yaml')
         if not os.path.exists(process_file):
             return jsonify({"error": f"Process file not found for crew '{crew_name}'"}), 404
         with open(process_file, 'r') as f:
             process_data = yaml.safe_load(f)
 
-        # Load agents.yaml
         agents_file = os.path.join(crew_dir, 'agents.yaml')
         if not os.path.exists(agents_file):
             return jsonify({"error": f"Agents file not found for crew '{crew_name}'"}), 404
         with open(agents_file, 'r') as f:
             agents_data = yaml.safe_load(f)
 
-        # Load tasks.yaml
         tasks_file = os.path.join(crew_dir, 'tasks.yaml')
         if not os.path.exists(tasks_file):
             return jsonify({"error": f"Tasks file not found for crew '{crew_name}'"}), 404
         with open(tasks_file, 'r') as f:
             tasks_data = yaml.safe_load(f)
 
-        # Get input arguments from the request
         input_args = request.json or {}
 
-        # Create the Crew object
-        result = run_crewai(process_data, agents_data, tasks_data, input_args)
+        # Create log_queue before calling run_crewai
+        log_queue = queue.Queue()
+
+
+        
+        # Pass log_queue to run_crewai
+        result = run_crewai(process_data, agents_data, tasks_data, input_args, log_queue)
         if isinstance(result, dict) and "error" in result:
             return jsonify(result), 400
         crew = result
 
-        # Set up logging queue and stream
-        log_queue = queue.Queue()
-
+        # LogStream class and kickoff thread setup remain unchanged
         class LogStream:
             def __init__(self, queue):
                 self.queue = queue
 
             def write(self, message):
-                if message.strip():  # Ignore empty lines
+                if message.strip():
                     self.queue.put({"type": "log", "message": message.strip()})
 
             def flush(self):
@@ -282,7 +285,6 @@ def run_crew(crew_name):
 
         log_stream = LogStream(log_queue)
 
-        # Function to run crew.kickoff in a thread
         def run_kickoff():
             with redirect_stdout(log_stream):
                 try:
@@ -291,24 +293,37 @@ def run_crew(crew_name):
                 except Exception as e:
                     log_queue.put({"type": "error", "message": str(e)})
 
-        # Start the kickoff in a separate thread
         thread = threading.Thread(target=run_kickoff)
         thread.start()
 
-        # Generator to stream logs
         def generate():
             while thread.is_alive() or not log_queue.empty():
                 try:
-                    message = log_queue.get(timeout=1)  # Short timeout to check thread status
+                    message = log_queue.get(timeout=1)
                     yield json.dumps(message) + "\n"
                 except queue.Empty:
-                    continue  # Keep checking if thread is alive
+                    continue
 
-        # Return streaming response
         return Response(generate(), mimetype='application/x-ndjson')
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/crew/<crew_name>/input', methods=['POST'], strict_slashes=False)
+def provide_input(crew_name):
+    """Endpoint to receive user input from the client."""
+    data = request.json
+    if not data or "id" not in data or "input" not in data:
+        return jsonify({"error": "Invalid request. Expected 'id' and 'input' fields"}), 400
+    
+    unique_id = data["id"]
+    user_input = data["input"]
+    
+    if unique_id in input_queues:
+        input_queues[unique_id].put(user_input)
+        return jsonify({"message": "Input received"})
+    else:
+        return jsonify({"error": "Invalid or expired input ID"}), 404
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True, port=5000)

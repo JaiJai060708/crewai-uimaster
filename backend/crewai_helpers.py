@@ -1,8 +1,8 @@
 from crewai import Agent, Task, Crew, Process
 from crewai_tools import SerperDevTool, ScrapeWebsiteTool
+from human_input_tool import HumanInputTool 
 
-
-def run_crewai(process, agents, tasks, input_args):
+def run_crewai(process, agents, tasks, input_args, log_queue):
     # Determine process type
     process_type = Process.sequential
     manager_llm = None
@@ -17,8 +17,6 @@ def run_crewai(process, agents, tasks, input_args):
     if process.get('crew', {}).get('planning') == True:
         allow_planning = True
 
-
-
     # Create agents
     agents_data = []
     for agent_id, agent_info in agents.items():
@@ -30,6 +28,9 @@ def run_crewai(process, agents, tasks, input_args):
                         tools.append(SerperDevTool())
                     elif tool == 'ScrapeWebsiteTool':
                         tools.append(ScrapeWebsiteTool())
+                    elif tool == 'HumanInputTool':
+                        tools.append(HumanInputTool(log_queue))  
+
             agent = Agent(
                 role=agent_info.get('role', ''),
                 goal=agent_info.get('goal', ''),
@@ -65,14 +66,13 @@ def run_crewai(process, agents, tasks, input_args):
                 )
                 tasks_data.append(task)
 
-
     # Create Crew object
     crew = Crew(
         process=process_type,
         agents=agents_data,
         tasks=tasks_data,
         manager_llm=manager_llm,
-        verbose=True,  # Ensures detailed console output
+        verbose=True,
         planning=allow_planning,
         planning_llm='gpt-4o'
     )

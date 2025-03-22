@@ -14,6 +14,14 @@
         "website_url": "A string specifying the URL of the website to be scraped."
       },
       "expected_output": "The textual content extracted from the specified website."
-    }
+    },
+    {
+        "name": "HumanInputTool",
+        "description": "Ask the user for input during the execution of the crew.",
+        "expected_input": {
+          "prompt": "A string specifying the message to display when requesting user input."
+        },
+        "expected_output": "The user's input as a string."
+      }
   ]
   

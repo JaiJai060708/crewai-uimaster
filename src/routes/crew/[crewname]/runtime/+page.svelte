@@ -17,6 +17,11 @@
   let timerInterval; // Store interval reference
   let userToggledLogs = false;
   
+  // Add new state variables for human input handling
+  let waitingForInput = false;
+  let currentInputRequest = null;
+  let userResponse = '';
+  
   // Fetch input variables
   async function fetchInputVariables() {
     loading = true;
@@ -150,6 +155,11 @@
     error = null;
     elapsedSeconds = 0; // Reset timer
     
+    // Reset input-related state
+    waitingForInput = false;
+    currentInputRequest = null;
+    userResponse = '';
+    
     // Start the timer
     timerInterval = setInterval(() => {
       elapsedSeconds += 1;
@@ -201,6 +211,20 @@
               throw new Error(message.message);
             } else if (message.type === 'log') {
               logs = [...logs, { type: 'log', message: message.message, raw: message.message }];
+            } else if (message.type === 'input_required') {
+              // Handle input required message
+              waitingForInput = true;
+              currentInputRequest = message;
+              logs = [...logs, { 
+                type: 'input_request', 
+                message: `Human input required: ${message.prompt}`, 
+                raw: message.prompt,
+                requestId: message.id
+              }];
+              // Make sure logs are visible when input is required
+              if (!showLogs) {
+                toggleLogs();
+              }
             }
           } catch (e) {
             if (e.message !== line) {
@@ -298,6 +322,46 @@
         });
       }
     }, 100);
+  }
+  
+  // Add function to handle input submission
+  async function submitUserInput() {
+    if (!currentInputRequest || !waitingForInput) return;
+    
+    try {
+      // Add user's response to logs
+      logs = [...logs, { 
+        type: 'user_response', 
+        message: `Your response: ${userResponse}`, 
+        raw: userResponse 
+      }];
+      
+      // Send the response to the server
+      const response = await fetch(`/api/crew/${crewName}/input`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          id: currentInputRequest.id,
+          input: userResponse
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to send your response');
+      }
+      
+      // Reset input state
+      waitingForInput = false;
+      currentInputRequest = null;
+      userResponse = '';
+      
+    } catch (err) {
+      error = err.message;
+      console.error('Error sending response:', err);
+      logs = [...logs, { type: 'error', message: `Error sending response: ${err.message}` }];
+    }
   }
   
   onMount(() => {
@@ -449,6 +513,10 @@
                     <div class="log-prefix system-prefix">SYSTEM</div>
                   {:else if log.type === 'error'}
                     <div class="log-prefix error-prefix">ERROR</div>
+                  {:else if log.type === 'input_request'}
+                    <div class="log-prefix input-prefix">INPUT</div>
+                  {:else if log.type === 'user_response'}
+                    <div class="log-prefix user-prefix">USER</div>
                   {:else}
                     <div class="log-prefix">LOG</div>
                   {/if}
@@ -457,6 +525,30 @@
                   </div>
                 </div>
               {/each}
+              
+              <!-- Human input form -->
+              {#if waitingForInput && currentInputRequest}
+                <div class="human-input-container">
+                  <form on:submit|preventDefault={submitUserInput} class="human-input-form">
+                    <div class="input-prompt">{currentInputRequest.prompt}</div>
+                    <div class="input-field-container">
+                      <textarea 
+                        bind:value={userResponse}
+                        placeholder="Type your response here..."
+                        rows="3"
+                        autofocus
+                      ></textarea>
+                      <button type="submit" class="send-response-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <line x1="22" y1="2" x2="11" y2="13"></line>
+                          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                        Send
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              {/if}
             {/if}
           </div>
         {/if}
@@ -1099,5 +1191,89 @@
       transform: scale(1.3);
       opacity: 1;
     }
+  }
+  
+  /* Human Input styles */
+  .log-entry.input_request {
+    background-color: rgba(14, 165, 233, 0.1);
+    border-left: 3px solid #0ea5e9;
+  }
+  
+  .log-entry.user_response {
+    background-color: rgba(168, 85, 247, 0.1);
+    border-left: 3px solid #a855f7;
+  }
+  
+  .input-prefix {
+    color: #0ea5e9;
+  }
+  
+  .user-prefix {
+    color: #a855f7;
+  }
+  
+  .human-input-container {
+    margin: 1rem 0;
+    padding: 1rem;
+    background-color: #1e293b;
+    border-radius: 8px;
+    border: 1px solid #475569;
+  }
+  
+  .human-input-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .input-prompt {
+    font-weight: 500;
+    color: #f1f5f9;
+    border-left: 3px solid #0ea5e9;
+    padding-left: 0.75rem;
+  }
+  
+  .input-field-container {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .human-input-form textarea {
+    flex: 1;
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #475569;
+    background-color: #0f172a;
+    color: #f1f5f9;
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: vertical;
+    min-height: 60px;
+  }
+  
+  .human-input-form textarea:focus {
+    outline: none;
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+  }
+  
+  .send-response-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: #0ea5e9;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    align-self: flex-end;
+  }
+  
+  .send-response-btn:hover {
+    background-color: #0284c7;
   }
 </style>
