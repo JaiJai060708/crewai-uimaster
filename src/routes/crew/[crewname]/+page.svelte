@@ -841,19 +841,25 @@
   }
   
   .back-link {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #64748b;
-    text-decoration: none;
-    font-size: 0.95rem;
-    transition: color 0.2s;
-    margin-right: 1rem;
-  }
-  
-  .back-link:hover {
-    color: #3b82f6;
-  }
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #64748b;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: color 0.2s;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      background-color: white;
+      margin-right: 1rem;
+    }
+    
+    .back-link:hover {
+      color: #3b82f6;
+      border-color: #bfdbfe;
+      background-color: #f8fafc;
+    }
   
   .delete-crew-button {
     display: flex;

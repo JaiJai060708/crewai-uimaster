@@ -2,11 +2,21 @@
 
 A powerful interface for creating and managing AI agents to solve complex problems.
 
+## Preview
+
+Create some complex agent to do whatever you want to do
+
+![Screenshot](./docs/team-structure.png)
+
+Run them whenever you want
+
+![Demo](./docs/run-crew.gif)
+
 ## Prerequisites
 
-- Python 3.12+
+- Python 3.12 (can only run in this version for now)
 - Node.js and npm
-- OpenAI API key
+- OpenAI_API_KEY
 - SERPER_API_KEY
 
 ## Environment Setup
