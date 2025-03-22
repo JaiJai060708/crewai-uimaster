@@ -378,26 +378,42 @@
         
         <div class="form-group">
           <label>Agents</label>
-          <div class="ordered-list-container">
+          <div class="agents-container">
             {#if process.agents.length === 0}
-              <div class="empty-list">No agents selected</div>
+              <div class="empty-agents">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <p>No agents selected</p>
+                <span>Select agents from the dropdown below to add them to the crew process.</span>
+              </div>
             {:else}
-              <div class="ordered-list">
+              <div class="agents-list">
                 {#each process.agents as agent, index}
-                  <div class="ordered-item">
-                    <div class="item-name">{agent}</div>
-                    <div class="item-actions">
-                      <button type="button" on:click={() => moveItem(process.agents, index, 'up')} disabled={index === 0}>
+                  <div class="agent-item">
+                    <div class="agent-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                      </svg>
+                    </div>
+                    <div class="agent-details">
+                      <div class="agent-name">{agent}</div>
+                      <div class="agent-task">Task: {process.tasks[index] || 'No task assigned'}</div>
+                    </div>
+                    <div class="agent-actions">
+                      <button type="button" class="action-btn move-up" on:click={() => moveItem(process.agents, index, 'up')} disabled={index === 0} title="Move up">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <polyline points="18 15 12 9 6 15"></polyline>
                         </svg>
                       </button>
-                      <button type="button" on:click={() => moveItem(process.agents, index, 'down')} disabled={index === process.agents.length - 1}>
+                      <button type="button" class="action-btn move-down" on:click={() => moveItem(process.agents, index, 'down')} disabled={index === process.agents.length - 1} title="Move down">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
                       </button>
-                      <button type="button" on:click={() => removeItem(process.agents, index)} class="remove-btn">
+                      <button type="button" class="action-btn remove" on:click={() => removeItem(process.agents, index)} title="Remove agent">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <line x1="18" y1="6" x2="6" y2="18"></line>
                           <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -409,8 +425,8 @@
               </div>
             {/if}
             
-            <div class="add-item-container">
-              <select id="agent-select" class="item-select">
+            <div class="agent-selector">
+              <select id="agent-select" class="agent-select">
                 <option value="" disabled selected>Select an agent to add</option>
                 {#each availableAgentTasks as pair}
                   {#if !process.agents.includes(pair.agent)}
@@ -420,7 +436,7 @@
               </select>
               <button 
                 type="button" 
-                class="add-btn"
+                class="add-agent-btn"
                 on:click={() => {
                   const agentSelect = document.getElementById('agent-select');
                   if (agentSelect.value) {
@@ -433,9 +449,14 @@
                   <line x1="12" y1="5" x2="12" y2="19"></line>
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
-                Add
+                Add Agent
               </button>
             </div>
+          </div>
+          <div class="field-description">
+            <strong>Note:</strong> The order of agents matters in sequential processes. Tasks are automatically associated with each agent.
+          </div>
+        </div>
         
         <div class="form-group">
           <label>Input Variables</label>
@@ -715,104 +736,156 @@
     color: #0f172a;
   }
   
-  .ordered-list-container {
+  .agents-container {
     border: 1px solid #e2e8f0;
     border-radius: 8px;
     overflow: hidden;
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   }
   
-  .empty-list {
-    padding: 1.5rem;
+  .empty-agents {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
     color: #94a3b8;
     text-align: center;
     background-color: #f8fafc;
-    font-style: italic;
   }
   
-  .ordered-list {
-    max-height: 300px;
+  .empty-agents svg {
+    color: #cbd5e1;
+    margin-bottom: 1rem;
+    width: 48px;
+    height: 48px;
+  }
+  
+  .empty-agents p {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin: 0 0 0.5rem 0;
+    color: #64748b;
+  }
+  
+  .empty-agents span {
+    font-size: 0.9rem;
+    max-width: 300px;
+  }
+  
+  .agents-list {
+    max-height: 400px;
     overflow-y: auto;
   }
   
-  .ordered-item {
+  .agent-item {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 1rem;
+    padding: 1rem 1.25rem;
     border-bottom: 1px solid #e2e8f0;
+    transition: background-color 0.2s;
+  }
+  
+  .agent-item:hover {
     background-color: #f8fafc;
   }
   
-  .ordered-item:last-child {
+  .agent-item:last-child {
     border-bottom: none;
   }
   
-  .item-name {
-    font-weight: 500;
+  .agent-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background-color: #eff6ff;
+    border-radius: 8px;
+    margin-right: 1rem;
+    color: #3b82f6;
+  }
+  
+  .agent-details {
     flex-grow: 1;
   }
   
-  .item-actions {
-    display: flex;
-    gap: 0.25rem;
+  .agent-name {
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 0.25rem;
   }
   
-  .item-actions button {
+  .agent-task {
+    font-size: 0.85rem;
+    color: #64748b;
+  }
+  
+  .agent-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .action-btn {
     background: none;
-    border: none;
-    padding: 0.25rem;
-    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+    padding: 0.4rem;
+    border-radius: 6px;
     cursor: pointer;
     color: #64748b;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.2s;
   }
   
-  .item-actions button:hover {
-    background-color: #e2e8f0;
-    color: #0f172a;
+  .action-btn:hover {
+    background-color: #f1f5f9;
   }
   
-  .item-actions button:disabled {
+  .action-btn:disabled {
     opacity: 0.3;
     cursor: not-allowed;
   }
   
-  .remove-btn:hover {
-    color: #ef4444 !important;
+  .action-btn.remove:hover {
+    color: #ef4444;
+    border-color: #fecaca;
+    background-color: #fee2e2;
   }
   
-  .add-item-container {
+  .agent-selector {
     display: flex;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
     border-top: 1px solid #e2e8f0;
-    background-color: white;
+    background-color: #f8fafc;
   }
   
-  .item-select {
+  .agent-select {
     flex-grow: 1;
-    padding: 0.5rem 0.75rem;
+    padding: 0.625rem 1rem;
     border-radius: 6px;
     border: 1px solid #cbd5e1;
     font-family: inherit;
     font-size: 0.95rem;
     color: #334155;
-    background-color: #f8fafc;
+    background-color: white;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
   
-  .item-select:focus {
+  .agent-select:focus {
     outline: none;
     border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
   }
   
-  .add-btn {
+  .add-agent-btn {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 1rem;
+    padding: 0.625rem 1.25rem;
     background-color: #3b82f6;
     color: white;
     border: none;
@@ -821,9 +894,11 @@
     font-size: 0.95rem;
     cursor: pointer;
     transition: background-color 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
   }
   
-  .add-btn:hover {
+  .add-agent-btn:hover {
     background-color: #2563eb;
   }
   
@@ -968,6 +1043,26 @@
       flex-direction: column;
       align-items: flex-start;
       gap: 0.5rem;
+    }
+    
+    .agent-item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+    
+    .agent-actions {
+      align-self: flex-end;
+      margin-top: -2.5rem;
+    }
+    
+    .agent-selector {
+      flex-direction: column;
+    }
+    
+    .add-agent-btn {
+      width: 100%;
+      justify-content: center;
     }
   }
 </style>
