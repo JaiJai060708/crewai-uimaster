@@ -45,6 +45,7 @@ def run_crewai(process, agents, tasks, input_args, log_queue):
     for task_id, task_info in tasks.items():
         if task_id in process.get('crew', {}).get('tasks', []):
             description = task_info.get('description', '')
+            max_retries = task_info.get('max_iterations', 2)
             if description:
                 try:
                     description = description.format(**input_args)
@@ -62,6 +63,7 @@ def run_crewai(process, agents, tasks, input_args, log_queue):
                 task = Task(
                     description=description,
                     expected_output=task_info.get('expected_output', ''),
+                    max_iterations=max_retries,
                     agent=agent
                 )
                 tasks_data.append(task)
