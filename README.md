@@ -4,6 +4,10 @@ A powerful interface for creating and managing AI agents to solve complex proble
 
 ## Preview
 
+Define your agents and tasks
+
+![Screenshot](./docs/agent.png)
+
 Create some complex agents and team structures to perform tasks
 
 ![Screenshot](./docs/team-structure.png)
@@ -23,9 +27,10 @@ Run and monitor their performance.
 
 1. Create a `.env` file in the root directory with the following:
 
-# env
-OPENAI_API_KEY
-SERPER_API_KEY
+```env
+OPENAI_API_KEY="your api key here"
+SERPER_API_KEY="your api key here"
+```
 
 ## Installation
 
@@ -36,9 +41,6 @@ Install the required Python packages:
 ```bash
 virtualenv -p python3.12 venv
 source venv/bin/activate
-```
-
-```bash
 python3.12 -m pip install -r requirements.txt
 ```
 
