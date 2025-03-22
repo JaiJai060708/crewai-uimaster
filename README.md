@@ -4,17 +4,17 @@ A powerful interface for creating and managing AI agents to solve complex proble
 
 ## Preview
 
-Create some complex agent to do whatever you want to do
+Create some complex agents and team structures to perform tasks
 
 ![Screenshot](./docs/team-structure.png)
 
-Run them whenever you want
+Run and monitor their performance.
 
 ![Demo](./docs/run-crew.gif)
 
 ## Prerequisites
 
-- Python 3.12 (can only run in this version for now)
+- Python 3.12 (please only run in this version for now)
 - Node.js and npm
 - OpenAI_API_KEY
 - SERPER_API_KEY
@@ -32,6 +32,11 @@ SERPER_API_KEY
 ### Python Dependencies
 
 Install the required Python packages:
+
+```bash
+virtualenv -p python3.12 venv
+source venv/bin/activate
+```
 
 ```bash
 python3.12 -m pip install -r requirements.txt
