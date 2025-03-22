@@ -12,6 +12,13 @@ def run_crewai(process, agents, tasks, input_args):
     elif process.get('crew', {}).get('process') == 'parallel':
         process_type = Process.parallel
 
+    # Determine if planning is allowed
+    allow_planning = False
+    if process.get('crew', {}).get('planning') == True:
+        allow_planning = True
+
+
+
     # Create agents
     agents_data = []
     for agent_id, agent_info in agents.items():
@@ -58,7 +65,6 @@ def run_crewai(process, agents, tasks, input_args):
                 )
                 tasks_data.append(task)
 
-        
 
     # Create Crew object
     crew = Crew(
@@ -66,7 +72,9 @@ def run_crewai(process, agents, tasks, input_args):
         agents=agents_data,
         tasks=tasks_data,
         manager_llm=manager_llm,
-        verbose=True  # Ensures detailed console output
+        verbose=True,  # Ensures detailed console output
+        planning=allow_planning,
+        planning_llm='gpt-4o'
     )
 
     return crew

@@ -9,7 +9,8 @@
     process: 'Hierarchical',
     agents: [],
     tasks: [],
-    inputs: {}
+    inputs: {},
+    planning: false
   };
   
   let originalProcess = {};
@@ -80,6 +81,9 @@
       
       // Initialize inputs object if not present
       process.inputs = crewData.inputs || {};
+      
+      // Extract planning value if present
+      process.planning = crewData.planning || false;
       
       // Extract all input variables from tasks
       await fetchTaskInputVariables();
@@ -191,8 +195,8 @@
           crew: {
             process: process.process.toLowerCase(),
             agents: process.agents,
-            tasks: process.tasks
-            // Inputs are not included here to avoid storing them
+            tasks: process.tasks,
+            planning: process.planning
           }
         }
       };
@@ -373,6 +377,25 @@
           <div class="field-description">
             <strong>Hierarchical:</strong> Tasks can be performed concurrently by different agents<br>
             <strong>Sequential:</strong> Tasks are performed one after another in the specified order
+          </div>
+        </div>
+        
+        <!-- Add new toggle for planning -->
+        <div class="form-group">
+          <label for="planning">Allow Planning</label>
+          <div class="planning-toggle">
+            <label class="toggle-switch">
+              <input 
+                type="checkbox" 
+                id="planning" 
+                bind:checked={process.planning}
+              />
+              <span class="toggle-slider"></span>
+              <span class="toggle-text">{process.planning ? 'Enabled' : 'Disabled'}</span>
+            </label>
+          </div>
+          <div class="field-description">
+            <strong>Planning:</strong> Enables your crew to devise a detailed, step-by-step plan before executing tasks. It assesses all crew information and formulates a structured approach for each task.
           </div>
         </div>
         
@@ -1000,6 +1023,64 @@
     align-items: center;
   }
   
+  .planning-toggle {
+    margin-bottom: 0.5rem;
+  }
+  
+  .toggle-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+  }
+  
+  .toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  .toggle-slider {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+    background-color: #e2e8f0;
+    border-radius: 34px;
+    transition: .4s;
+    margin-right: 12px;
+  }
+  
+  .toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    border-radius: 50%;
+    transition: .4s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  input:checked + .toggle-slider {
+    background-color: #3b82f6;
+  }
+  
+  input:focus + .toggle-slider {
+    box-shadow: 0 0 1px #3b82f6;
+  }
+  
+  input:checked + .toggle-slider:before {
+    transform: translateX(24px);
+  }
+  
+  .toggle-text {
+    font-weight: 500;
+    color: #0f172a;
+  }
+  
   @media (max-width: 768px) {
     .container {
       padding: 1.5rem;
@@ -1063,6 +1144,11 @@
     .add-agent-btn {
       width: 100%;
       justify-content: center;
+    }
+    
+    .planning-toggle {
+      display: flex;
+      justify-content: flex-start;
     }
   }
 </style>
