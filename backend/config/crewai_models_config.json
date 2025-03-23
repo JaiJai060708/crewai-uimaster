@@ -32,14 +32,14 @@
       "description": "An advanced reasoning model that builds upon o1-preview, offering enhanced capabilities in complex problem-solving across various domains."
     },
     {
-      "name": "OpenAI GPT-4",
-      "model": "gpt-4",
-      "description": "OpenAI's advanced language model, known for its high accuracy and complex reasoning capabilities. Suitable for tasks requiring deep understanding and nuanced text generation."
-    },
-    {
       "name": "OpenAI GPT-4 Turbo",
       "model": "gpt-4-turbo",
       "description": "An optimized version of GPT-4 with a larger context window (up to 128,000 tokens), ideal for processing long-form content and extensive document analysis efficiently."
+    },
+    {
+      "name": "OpenAI GPT-4",
+      "model": "gpt-4",
+      "description": "OpenAI's advanced language model, known for its high accuracy and complex reasoning capabilities. Suitable for tasks requiring deep understanding and nuanced text generation."
     }
   ]
 }]

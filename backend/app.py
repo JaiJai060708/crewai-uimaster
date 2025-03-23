@@ -26,7 +26,7 @@ def home():
 @app.route('/api/tools', methods=['GET'], strict_slashes=False)
 def list_tools():
     try:
-        tools_path = os.path.join(os.path.dirname(__file__), 'crewai_tools_config.json')
+        tools_path = os.path.join(os.path.dirname(__file__), 'config', 'crewai_tools_config.json')
         with open(tools_path, 'r') as f:
             tools_data = json.load(f)
         return jsonify(tools_data)
@@ -36,7 +36,7 @@ def list_tools():
 @app.route('/api/models', methods=['GET'], strict_slashes=False)
 def list_models():
     try:
-        models_path = os.path.join(os.path.dirname(__file__), 'crewai_models_config.json')
+        models_path = os.path.join(os.path.dirname(__file__), 'config', 'crewai_models_config.json')
         with open(models_path, 'r') as f:
             models_data = json.load(f)
         return jsonify(models_data)
