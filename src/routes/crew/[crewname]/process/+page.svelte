@@ -128,7 +128,7 @@
       process.planning = crewData.planning || false;
       
       // Extract model if present, otherwise use default
-      process.model = crewData.model || 'gpt-4o-mini';
+      process.model = crewData.model || 'gpt-4o';
       
       // Extract all input variables from tasks
       await fetchTaskInputVariables();
