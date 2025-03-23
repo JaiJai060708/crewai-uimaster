@@ -10,7 +10,8 @@
     agents: [],
     tasks: [],
     inputs: {},
-    planning: false
+    planning: false,
+    model: 'gpt-4o' // Add default model
   };
   
   let originalProcess = {};
@@ -19,6 +20,8 @@
   let errorTimeout;
   let saveSuccess = false;
   let successTimeout;
+  let availableModels = []; // Store available models from API
+  let modelsLoading = true; // Separate loading state for models
   
   // Function to set error with auto-dismiss
   function setError(message) {
@@ -50,6 +53,45 @@
 
   // With a single structure that contains both agent and task pairs
   let availableAgentTasks = [];
+  
+  // Fetch available models
+  async function fetchModels() {
+    modelsLoading = true;
+    try {
+      const response = await fetch('/api/models');
+      if (!response.ok) throw new Error('Failed to fetch models');
+      const modelsData = await response.json();
+      
+      // Enhance models with company information
+      availableModels = modelsData.flatMap(company => {
+        return (company.models || []).map(model => ({
+          ...model,
+          _company: company.company  // Store company name in model object
+        }));
+      });
+    } catch (err) {
+      console.error('Error fetching models:', err);
+      setError(err.message);
+    } finally {
+      modelsLoading = false;
+    }
+  }
+  
+  // Helper function to get company name from model data
+  function getModelCompany(modelId) {
+    for (const model of availableModels) {
+      if (model.model === modelId && model._company) {
+        return model._company;
+      }
+    }
+    
+    // If not found or not associated with company, try to determine from name
+    if (modelId.startsWith('gpt-') || modelId.includes('o1') || modelId.includes('o3')) {
+      return 'OpenAI';
+    }
+    
+    return '';
+  }
   
   // Fetch process data
   async function fetchProcessData() {
@@ -84,6 +126,9 @@
       
       // Extract planning value if present
       process.planning = crewData.planning || false;
+      
+      // Extract model if present, otherwise use default
+      process.model = crewData.model || 'gpt-4o-mini';
       
       // Extract all input variables from tasks
       await fetchTaskInputVariables();
@@ -196,7 +241,8 @@
             process: process.process.toLowerCase(),
             agents: process.agents,
             tasks: process.tasks,
-            planning: process.planning
+            planning: process.planning,
+            model: process.model // Include model in process data
           }
         }
       };
@@ -287,7 +333,7 @@
   $: hasChanges = JSON.stringify(process) !== JSON.stringify(originalProcess);
   
   onMount(() => {
-    fetchProcessData();
+    Promise.all([fetchProcessData(), fetchModels()]);
     
     // Return cleanup function
     return () => {
@@ -480,6 +526,61 @@
             <strong>Note:</strong> The order of agents matters in sequential processes. Tasks are automatically associated with each agent.
           </div>
         </div>
+        
+        <!-- Add model selection dropdown, only visible for hierarchical process or when planning is enabled -->
+        {#if process.process === 'Hierarchical' || process.planning}
+          <div class="form-group">
+            <label for="model">Default Language Model</label>
+            {#if modelsLoading}
+              <div class="loading-small">
+                <div class="loading-spinner-small"></div>
+                <span>Loading models...</span>
+              </div>
+            {:else}
+              <select 
+                id="model" 
+                bind:value={process.model}
+                required
+              >
+                {#each availableModels as model}
+                  <option value={model.model}>{model.name}</option>
+                {/each}
+              </select>
+              
+              <!-- Enhanced model description display -->
+              {#if process.model && availableModels.length}
+                {#if availableModels.find(m => m.model === process.model)}
+                  {@const selectedModel = availableModels.find(m => m.model === process.model)}
+                  {@const company = selectedModel ? getModelCompany(selectedModel.model) : ''}
+                  <div class="model-details">
+                    <div class="model-header">
+                      <div class="model-title">
+                        <span class="model-name">{selectedModel.name}</span>
+                        <span class="model-id">{selectedModel.model}</span>
+                      </div>
+                      {#if company}
+                        <div class="model-company">{company}</div>
+                      {/if}
+                    </div>
+                    <div class="model-description">{selectedModel.description}</div>
+                  </div>
+                {:else}
+                  <div class="field-description">Select the default language model for this crew</div>
+                {/if}
+              {:else}
+                <div class="field-description">Select the default language model for this crew</div>
+              {/if}
+            {/if}
+            <div class="field-description">
+              {#if process.process === 'Hierarchical'}
+                This model will be used by the crew for hierarchical planning and task coordination.
+              {:else if process.planning}
+                This model will be used by the crew for planning before execution.
+              {/if}
+              Individual agents can override this setting with their own model preferences.
+            </div>
+          </div>
+        {/if}
         
         <div class="form-group">
           <label>Input Variables</label>
@@ -1149,6 +1250,113 @@
     .planning-toggle {
       display: flex;
       justify-content: flex-start;
+    }
+  }
+  
+  /* Add these new styles for the model section */
+  .loading-small {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1.2rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background-color: #f8fafc;
+    color: #64748b;
+  }
+  
+  .loading-spinner-small {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(59, 130, 246, 0.2);
+    border-radius: 50%;
+    border-top-color: #3b82f6;
+    animation: spin 1s ease-in-out infinite;
+  }
+  
+  select {
+    width: 100%;
+    padding: 0.85rem 1.2rem;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    font-family: inherit;
+    font-size: 1rem;
+    color: #334155;
+    background-color: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1em;
+  }
+  
+  select:focus {
+    outline: none;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+  }
+  
+  /* Enhanced styles for model details */
+  .model-details {
+    margin-top: 1rem;
+    padding: 1.25rem;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+  
+  .model-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  
+  .model-title {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .model-name {
+    font-weight: 600;
+    color: #0f172a;
+    font-size: 1.1rem;
+  }
+  
+  .model-id {
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    color: #64748b;
+    font-size: 0.85rem;
+  }
+  
+  .model-company {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #3b82f6;
+    padding: 0.25rem 0.75rem;
+    background-color: #dbeafe;
+    border-radius: 4px;
+  }
+  
+  .model-description {
+    color: #334155;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+  
+  @media (max-width: 640px) {
+    .model-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    
+    .model-company {
+      align-self: flex-start;
     }
   }
 </style>

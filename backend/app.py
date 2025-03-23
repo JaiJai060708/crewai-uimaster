@@ -33,7 +33,15 @@ def list_tools():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
+@app.route('/api/models', methods=['GET'], strict_slashes=False)
+def list_models():
+    try:
+        models_path = os.path.join(os.path.dirname(__file__), 'crewai_models_config.json')
+        with open(models_path, 'r') as f:
+            models_data = json.load(f)
+        return jsonify(models_data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/list-crews', methods=['GET'], strict_slashes=False)
 def list_crews():

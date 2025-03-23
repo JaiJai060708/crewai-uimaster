@@ -1,0 +1,45 @@
+[{  
+    "company": "OpenAI",
+    "models": [
+    {
+      "name": "OpenAI GPT-4o mini",
+      "model": "gpt-4o-mini",
+      "description": "An affordable, smaller model optimized for fast, lightweight tasks. While it may not match the depth of larger models, it provides efficient performance for simpler applications."
+    },
+    {
+      "name": "OpenAI o1-mini",
+      "model": "o1-mini",
+      "description": "Offers a 128,000-token context window, optimized for quick reasoning and complex analytical tasks, ensuring rapid and accurate responses."
+    },
+    {
+      "name": "OpenAI o3-mini",
+      "model": "o3-mini",
+      "description": "A model with an extended context window (up to 200,000 tokens), designed for fast and complex reasoning tasks, providing efficient performance."
+    },
+    {
+      "name": "OpenAI GPT-4o",
+      "model": "gpt-4o",
+      "description": "A high-intelligence model suitable for complex tasks, including both text and vision inputs, with a 128k context length. It balances performance with cost, making it versatile for various applications."
+    },
+    {
+      "name": "OpenAI o1-preview",
+      "model": "o1-preview",
+      "description": "Designed for complex reasoning tasks, o1-preview spends more time 'thinking' before responding, making it effective in science, coding, and math applications."
+    },
+    {
+      "name": "OpenAI o1",
+      "model": "o1",
+      "description": "An advanced reasoning model that builds upon o1-preview, offering enhanced capabilities in complex problem-solving across various domains."
+    },
+    {
+      "name": "OpenAI GPT-4",
+      "model": "gpt-4",
+      "description": "OpenAI's advanced language model, known for its high accuracy and complex reasoning capabilities. Suitable for tasks requiring deep understanding and nuanced text generation."
+    },
+    {
+      "name": "OpenAI GPT-4 Turbo",
+      "model": "gpt-4-turbo",
+      "description": "An optimized version of GPT-4 with a larger context window (up to 128,000 tokens), ideal for processing long-form content and extensive document analysis efficiently."
+    }
+  ]
+}]

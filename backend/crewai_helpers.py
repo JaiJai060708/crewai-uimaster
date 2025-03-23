@@ -3,12 +3,15 @@ from crewai_tools import SerperDevTool, ScrapeWebsiteTool
 from human_input_tool import HumanInputTool 
 
 def run_crewai(process, agents, tasks, input_args, log_queue):
+    # Get the model for the crew
+    model_crew = process.get('crew', {}).get('model', 'gpt-4o')
+    
     # Determine process type
     process_type = Process.sequential
     manager_llm = None
     if process.get('crew', {}).get('process') == 'hierarchical':
         process_type = Process.hierarchical
-        manager_llm = 'gpt-4o'
+        manager_llm = model_crew
     elif process.get('crew', {}).get('process') == 'parallel':
         process_type = Process.parallel
 
@@ -36,7 +39,8 @@ def run_crewai(process, agents, tasks, input_args, log_queue):
                 goal=agent_info.get('goal', ''),
                 backstory=agent_info.get('backstory', ''),
                 allow_delegation=agent_info.get('allow_delegation', False),
-                tools=tools
+                tools=tools,
+                llm=agent_info.get('llm_model', 'gpt-4o-mini')
             )
             agents_data.append(agent)
 
@@ -76,7 +80,7 @@ def run_crewai(process, agents, tasks, input_args, log_queue):
         manager_llm=manager_llm,
         verbose=True,
         planning=allow_planning,
-        planning_llm='gpt-4o'
+        planning_llm=model_crew
     )
 
     return crew

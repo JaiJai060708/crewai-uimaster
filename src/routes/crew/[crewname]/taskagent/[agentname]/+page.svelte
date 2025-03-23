@@ -14,6 +14,7 @@
       backstory: '',
       allow_delegation: false,
       tools: [], // Initialize tools array
+      model: 'gpt-4o-mini', // Add default model
       
       // Task properties
       description: '',
@@ -27,13 +28,38 @@
     let saveSuccess = false;
     let deleteConfirmOpen = false; // Add state for delete confirmation modal
     let availableTools = []; // Store available tools from API
+    let availableModels = []; // Store available models from API
     let toolsLoading = true; // Separate loading state for tools
+    let modelsLoading = true; // Separate loading state for models
     let isEditingName = false; // New variable to track editing state
     let newAgentName = ''; // Variable to hold the new agent name
     let nameError = null; // Variable to hold name validation errors
     
     // Computed task name based on agent name
     $: taskName = taskAgent.name ? `${taskAgent.name}_task` : '';
+    
+    // Fetch available models
+    async function fetchModels() {
+      modelsLoading = true;
+      try {
+        const response = await fetch('/api/models');
+        if (!response.ok) throw new Error('Failed to fetch models');
+        const modelsData = await response.json();
+        
+        // Enhance models with company information
+        availableModels = modelsData.flatMap(company => {
+          return (company.models || []).map(model => ({
+            ...model,
+            _company: company.company  // Store company name in model object
+          }));
+        });
+      } catch (err) {
+        console.error('Error fetching models:', err);
+        error = err.message;
+      } finally {
+        modelsLoading = false;
+      }
+    }
     
     // Fetch available tools
     async function fetchTools() {
@@ -90,7 +116,8 @@
           goal: taskAgent.goal,
           backstory: taskAgent.backstory,
           allow_delegation: taskAgent.allow_delegation,
-          tools: taskAgent.tools
+          tools: taskAgent.tools,
+          model: taskAgent.model // Include model in agent data
         };
         
         // Update the agents data
@@ -198,7 +225,8 @@
     $: inputVariables = extractInputs(taskAgent.description || '');
     
     onMount(() => {
-      fetchTools().then(() => {
+      // Fetch both tools and models
+      Promise.all([fetchTools(), fetchModels()]).then(() => {
         // Check if we have an agent name in the URL params
         const agentName = $page.params.agentname;
         
@@ -235,6 +263,7 @@
             backstory: '',
             allow_delegation: false,
             tools: [],
+            model: 'gpt-4o-mini', // Set default model
             
             description: '',
             expected_output: '',
@@ -261,6 +290,7 @@
             backstory: agent.backstory || '',
             allow_delegation: agent.allow_delegation || false,
             tools: agent.tools || [],
+            model: agent.model || 'gpt-4o-mini', // Use saved model or default
             
             description: task.description || '',
             expected_output: task.expected_output || '',
@@ -527,6 +557,23 @@
             console.error('Error renaming agent:', error);
             error = error.message;
         }
+    }
+    
+    // Helper function to get company name from model data
+    function getModelCompany(modelId) {
+      for (const company of availableModels.map(model => {
+        const response = model.model === modelId ? model._company : null;
+        return response;
+      }).filter(Boolean)) {
+        if (company) return company;
+      }
+      
+      // If not found or not associated with company, try to determine from name
+      if (modelId.startsWith('gpt-') || modelId.includes('o1') || modelId.includes('o3')) {
+        return 'OpenAI';
+      }
+      
+      return '';
     }
 </script>
   
@@ -804,6 +851,51 @@
                   </div>
                 {/each}
               </div>
+            {/if}
+          </div>
+          
+          <!-- Add the model selection dropdown at the bottom of the agent section -->
+          <div class="form-group">
+            <label for="model">Language Model</label>
+            {#if modelsLoading}
+              <div class="loading-small">
+                <div class="loading-spinner-small"></div>
+                <span>Loading models...</span>
+              </div>
+            {:else}
+              <select 
+                id="model" 
+                bind:value={taskAgent.model}
+                required
+              >
+                {#each availableModels as model}
+                  <option value={model.model}>{model.name}</option>
+                {/each}
+              </select>
+              
+              <!-- Enhanced model description display -->
+                {#if taskAgent.model && availableModels.length}
+                  {#if availableModels.find(m => m.model === taskAgent.model)}
+                  {@const selectedModel = availableModels.find(m => m.model === taskAgent.model)}
+                  {@const company = selectedModel ? getModelCompany(selectedModel.model) : ''}
+                  <div class="model-details">
+                    <div class="model-header">
+                      <div class="model-title">
+                        <span class="model-name">{selectedModel.name}</span>
+                        <span class="model-id">{selectedModel.model}</span>
+                      </div>
+                      {#if company}
+                        <div class="model-company">{company}</div>
+                      {/if}
+                    </div>
+                    <div class="model-description">{selectedModel.description}</div>
+                  </div>
+                {:else}
+                  <div class="field-description">Select the language model this agent will use</div>
+                {/if}
+              {:else}
+                <div class="field-description">Select the language model this agent will use</div>
+              {/if}
             {/if}
           </div>
         </section>
@@ -1796,5 +1888,67 @@
       border-radius: 4px;
       max-width: 100%;
       text-align: center;
+    }
+    
+    /* Enhanced styles for model details */
+    .model-details {
+      margin-top: 1rem;
+      padding: 1.25rem;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    
+    .model-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+    
+    .model-title {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    
+    .model-name {
+      font-weight: 600;
+      color: #0f172a;
+      font-size: 1.1rem;
+    }
+    
+    .model-id {
+      font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+      color: #64748b;
+      font-size: 0.85rem;
+    }
+    
+    .model-company {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #3b82f6;
+      padding: 0.25rem 0.75rem;
+      background-color: #dbeafe;
+      border-radius: 4px;
+    }
+    
+    .model-description {
+      color: #334155;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    
+    @media (max-width: 640px) {
+      .model-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+      
+      .model-company {
+        align-self: flex-start;
+      }
     }
   </style>   
