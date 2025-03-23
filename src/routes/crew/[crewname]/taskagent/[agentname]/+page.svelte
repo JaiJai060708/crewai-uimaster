@@ -324,6 +324,36 @@
         
         if (!saveTaskResponse.ok) throw new Error('Failed to delete task data');
         
+        // 3. Update process.yaml to remove any references to the deleted agent and task
+        const processResponse = await fetch(`/api/crew/${crewName}/process`);
+        if (!processResponse.ok) throw new Error('Failed to fetch crew process');
+        const processData = await processResponse.json();
+        
+        if (processData && processData.process && processData.process.crew) {
+          const processCrew = processData.process.crew;
+          
+          // Remove agent references from the agents array
+          if (Array.isArray(processCrew.agents)) {
+            processCrew.agents = processCrew.agents.filter(agent => agent !== taskAgent.name);
+          }
+          
+          // Remove task references from the tasks array
+          if (Array.isArray(processCrew.tasks)) {
+            processCrew.tasks = processCrew.tasks.filter(task => task !== taskName);
+          }
+          
+          // Save the updated process data
+          const saveProcessResponse = await fetch(`/api/crew/${crewName}/process`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ process: processData.process })
+          });
+          
+          if (!saveProcessResponse.ok) throw new Error('Failed to update process data');
+        }
+        
         // Navigate back to crew page after successful deletion
         goto(`/crew/${crewName}`);
         
@@ -386,6 +416,11 @@
             if (!tasksResponse.ok) throw new Error('Failed to fetch crew tasks');
             const tasksData = await tasksResponse.json();
             
+            // Fetch process data
+            const processResponse = await fetch(`/api/crew/${crewName}/process`);
+            if (!processResponse.ok) throw new Error('Failed to fetch crew process');
+            const processData = await processResponse.json();
+            
             // Create a copy of the agents object
             const updatedAgents = { ...agentsData.agents };
             
@@ -436,6 +471,36 @@
                 });
                 
                 if (!saveTaskResponse.ok) throw new Error('Failed to save task data');
+            }
+            
+            // Update process.yaml if it contains references to the agent or task
+            if (processData && processData.process && processData.process.crew) {
+                const processCrew = processData.process.crew;
+                
+                // Update agent references in the agents array
+                if (Array.isArray(processCrew.agents)) {
+                    processCrew.agents = processCrew.agents.map(agent => 
+                        agent === taskAgent.name ? newName : agent
+                    );
+                }
+                
+                // Update task references in the tasks array
+                if (Array.isArray(processCrew.tasks)) {
+                    processCrew.tasks = processCrew.tasks.map(task => 
+                        task === oldTaskName ? newTaskName : task
+                    );
+                }
+                
+                // Save the updated process data
+                const saveProcessResponse = await fetch(`/api/crew/${crewName}/process`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ process: processData.process })
+                });
+                
+                if (!saveProcessResponse.ok) throw new Error('Failed to update process data');
             }
             
             // Update local state
