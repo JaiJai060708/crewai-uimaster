@@ -28,6 +28,9 @@
     let deleteConfirmOpen = false; // Add state for delete confirmation modal
     let availableTools = []; // Store available tools from API
     let toolsLoading = true; // Separate loading state for tools
+    let isEditingName = false; // New variable to track editing state
+    let newAgentName = ''; // Variable to hold the new agent name
+    let nameError = null; // Variable to hold name validation errors
     
     // Computed task name based on agent name
     $: taskName = taskAgent.name ? `${taskAgent.name}_task` : '';
@@ -330,7 +333,137 @@
         loading = false;
       }
     }
-  </script>
+    
+    function handleAgentNameClick() {
+        newAgentName = taskAgent.name; // Initialize with current name
+        isEditingName = true; // Enable editing mode
+        nameError = null; // Clear any previous errors
+    }
+    
+    function handleAgentNameKeyPress(event) {
+        if (event.key === 'Enter') {
+            validateAndRename(newAgentName);
+        }
+    }
+    
+    function validateAndRename(name) {
+        // Check if name is empty
+        if (!name.trim()) {
+            nameError = "Agent name cannot be empty";
+            return;
+        }
+        
+        // Check if name contains only allowed characters (letters, numbers, underscore)
+        if (!/^[a-zA-Z0-9_]+$/.test(name)) {
+            nameError = "Agent name can only contain letters, numbers, and underscores";
+            return;
+        }
+        
+        // If validation passes, attempt to rename
+        renameAgent(name);
+    }
+    
+    async function renameAgent(newName) {
+        if (!newName || newName === taskAgent.name) {
+            isEditingName = false;
+            return;
+        }
+        
+        try {
+            // First, fetch all agents to check for name uniqueness
+            const agentsResponse = await fetch(`/api/crew/${crewName}/agents`);
+            if (!agentsResponse.ok) throw new Error('Failed to fetch crew agents');
+            const agentsData = await agentsResponse.json();
+            
+            // Check if the new name already exists
+            if (agentsData.agents && newName in agentsData.agents && newName !== taskAgent.name) {
+                nameError = `An agent named "${newName}" already exists`;
+                return;
+            }
+            
+            // Fetch all tasks
+            const tasksResponse = await fetch(`/api/crew/${crewName}/tasks`);
+            if (!tasksResponse.ok) throw new Error('Failed to fetch crew tasks');
+            const tasksData = await tasksResponse.json();
+            
+            // Create a copy of the agents object
+            const updatedAgents = { ...agentsData.agents };
+            
+            // Store the old agent data and remove it from the object
+            const oldAgentData = { ...updatedAgents[taskAgent.name] };
+            delete updatedAgents[taskAgent.name];
+            
+            // Update agent name and add it back to the agents object
+            oldAgentData.name = newName;
+            updatedAgents[newName] = oldAgentData;
+            
+            // Save the updated agents data
+            const saveAgentResponse = await fetch(`/api/crew/${crewName}/agents`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ agents: updatedAgents })
+            });
+            
+            if (!saveAgentResponse.ok) throw new Error('Failed to save agent data');
+            
+            // Now handle the task rename
+            const oldTaskName = `${taskAgent.name}_task`;
+            const newTaskName = `${newName}_task`;
+            
+            // Create a copy of the tasks object
+            const updatedTasks = { ...tasksData.tasks };
+            
+            // If the task exists, rename it
+            if (updatedTasks[oldTaskName]) {
+                // Store the old task data and remove it from the object
+                const oldTaskData = { ...updatedTasks[oldTaskName] };
+                delete updatedTasks[oldTaskName];
+                
+                // Update task name and agent reference
+                oldTaskData.name = newTaskName;
+                oldTaskData.agents = newName;
+                updatedTasks[newTaskName] = oldTaskData;
+                
+                // Save the updated tasks data
+                const saveTaskResponse = await fetch(`/api/crew/${crewName}/tasks`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ tasks: updatedTasks })
+                });
+                
+                if (!saveTaskResponse.ok) throw new Error('Failed to save task data');
+            }
+            
+            // Update local state
+            taskAgent.name = newName;
+            
+            // Update the URL without page refresh
+            const newUrl = `/crew/${crewName}/taskagent/${newName}`;
+            window.history.pushState({ path: newUrl }, '', newUrl);
+            
+            // Show success message
+            saveSuccess = true;
+            setTimeout(() => {
+                saveSuccess = false;
+            }, 3000);
+            
+            // Update original state to reflect changes
+            originalTaskAgent = JSON.parse(JSON.stringify(taskAgent));
+            
+            // Exit editing mode
+            isEditingName = false;
+            nameError = null;
+            
+        } catch (error) {
+            console.error('Error renaming agent:', error);
+            error = error.message;
+        }
+    }
+</script>
   
   <!-- Fixed position alerts that are always visible -->
   {#if error}
@@ -371,7 +504,23 @@
         Back to Crew
       </a>
       <div class="title-section">
-        <h1>{taskAgent.name}</h1>
+        {#if isEditingName}
+            <div class="edit-name-container">
+                <input 
+                    type="text" 
+                    class="edit-name-input {nameError ? 'has-error' : ''}" 
+                    bind:value={newAgentName} 
+                    on:keypress={handleAgentNameKeyPress}
+                    on:blur={() => isEditingName = false}
+                    autofocus
+                />
+                {#if nameError}
+                    <div class="name-error-message">{nameError}</div>
+                {/if}
+            </div>
+        {:else}
+            <h1 on:click={handleAgentNameClick}>{taskAgent.name}</h1>
+        {/if}
         <div class="taskagent-crew">
           For crew: <a href="/crew/{crewName}">{crewName}</a>
         </div>
@@ -707,6 +856,14 @@
       color: #0f172a;
       letter-spacing: -0.025em;
       margin: 0;
+      cursor: pointer; /* Add cursor pointer to indicate it's clickable */
+      padding: 0.5rem;
+      border-radius: 6px;
+      transition: background-color 0.2s ease;
+    }
+    
+    h1:hover {
+      background-color: #f1f5f9; /* Light background on hover */
     }
     
     .taskagent-crew {
@@ -1535,5 +1692,44 @@
         padding: 0.7rem 1.2rem;
         font-size: 0.9rem;
       }
+    }
+    
+    /* Edit name input styling */
+    .edit-name-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+    
+    .edit-name-input {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #0f172a;
+      width: 100%;
+      text-align: center;
+      padding: 0.5rem;
+      border: 2px solid #3b82f6;
+      border-radius: 6px;
+      margin: 0;
+      background-color: white;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+    
+    .edit-name-input.has-error {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+    }
+    
+    .name-error-message {
+      color: #ef4444;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      font-weight: 500;
+      background-color: #fee2e2;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      max-width: 100%;
+      text-align: center;
     }
   </style>   

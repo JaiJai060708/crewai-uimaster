@@ -25,6 +25,102 @@
   let showDeleteConfirmation = false;
   let deleteInProgress = false;
   
+  let isEditingName = false; // New variable to track editing state
+  let newCrewName = crew.name; // Variable to hold the new crew name
+  
+  // Add these variables to the script section
+  let isEditingCrewName = false;
+  let crewNameError = null;
+  
+  function handleCrewNameClick() {
+      newCrewName = crew.name; // Initialize with current name
+      isEditingCrewName = true; // Enable editing mode
+      crewNameError = null; // Clear any previous errors
+  }
+  
+  function handleCrewNameKeyPress(event) {
+      if (event.key === 'Enter') {
+          validateAndRenameCrew(newCrewName);
+      }
+  }
+  
+  function validateAndRenameCrew(name) {
+      // Check if name is empty
+      if (!name.trim()) {
+          crewNameError = "Crew name cannot be empty";
+          return;
+      }
+      
+      // Check if name contains only allowed characters (letters, numbers, underscore)
+      if (!/^[a-zA-Z0-9_]+$/.test(name)) {
+          crewNameError = "Crew name can only contain letters, numbers, and underscores";
+          return;
+      }
+      
+      // If validation passes, attempt to rename
+      renameCrew(name);
+  }
+  
+  async function renameCrew(newName) {
+      if (!newName || newName === crew.name) {
+          isEditingCrewName = false;
+          return;
+      }
+      
+      try {
+          // First, fetch all crews to check for name uniqueness
+          const crewsResponse = await fetch('/api/list-crews');
+          if (!crewsResponse.ok) throw new Error('Failed to fetch crews');
+          const crews = await crewsResponse.json();
+          
+          // Check if the new name already exists
+          if (crews.includes(newName)) {
+              crewNameError = `A crew named "${newName}" already exists`;
+              return;
+          }
+          
+          // Call the backend API to rename the crew
+          const response = await fetch(`/api/crew/${crew.name}/rename`, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ new_name: newName })
+          });
+          
+          if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || 'Failed to rename crew');
+          }
+          
+          // Update local state
+          const oldName = crew.name;
+          crew.name = newName;
+          
+          // Update the URL without page refresh
+          const newUrl = `/crew/${newName}`;
+          window.history.pushState({ path: newUrl }, '', newUrl);
+          
+          // Show success message
+          setSuccess(`Crew renamed from "${oldName}" to "${newName}"`);
+          
+          // Exit editing mode
+          isEditingCrewName = false;
+          crewNameError = null;
+      } catch (error) {
+          console.error('Error renaming crew:', error);
+          setError(error.message);
+      }
+  }
+  
+  // Add the setSuccess function if it doesn't exist
+  function setSuccess(message) {
+      successMessage = message;
+      setTimeout(() => {
+          successMessage = null;
+      }, 3000);
+  }
+  
   // Fetch crew data
   async function fetchCrewData() {
     loading = true;
@@ -199,7 +295,25 @@
       </svg>
       Back to Crews
     </a>
-    <h1>{crew.name}</h1>
+    
+    {#if isEditingCrewName}
+        <div class="edit-name-container">
+            <input 
+                type="text" 
+                class="edit-name-input {crewNameError ? 'has-error' : ''}" 
+                bind:value={newCrewName} 
+                on:keypress={handleCrewNameKeyPress}
+                on:blur={() => isEditingCrewName = false}
+                autofocus
+            />
+            {#if crewNameError}
+                <div class="name-error-message">{crewNameError}</div>
+            {/if}
+        </div>
+    {:else}
+        <h1 on:click={handleCrewNameClick}>{crew.name}</h1>
+    {/if}
+    
     <button class="delete-crew-button" on:click={() => showDeleteConfirmation = true}>
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="3 6 5 6 21 6"></polyline>
@@ -2195,4 +2309,59 @@
   }
   
   /* ... rest of your styles ... */
+  
+  .edit-name-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 400px; /* Limit width for better UX */
+  }
+  
+  .edit-name-input {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #0f172a;
+    width: 100%;
+    text-align: center;
+    padding: 0.5rem;
+    border: 2px solid #3b82f6;
+    border-radius: 6px;
+    margin: 0;
+    background-color: white;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  }
+  
+  .edit-name-input.has-error {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+  }
+  
+  .name-error-message {
+    color: #ef4444;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    font-weight: 500;
+    background-color: #fee2e2;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    max-width: 100%;
+    text-align: center;
+  }
+  
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.025em;
+    margin: 0;
+    cursor: pointer; /* Add cursor pointer to indicate it's clickable */
+    padding: 0.5rem;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+  }
+  
+  h1:hover {
+    background-color: #f1f5f9; /* Light background on hover */
+  }
 </style>

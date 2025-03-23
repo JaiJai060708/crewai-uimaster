@@ -3,6 +3,7 @@ import yaml
 import queue
 import threading
 import json
+import re
 
 from flask import Flask, jsonify, request, Response
 from contextlib import redirect_stdout
@@ -173,43 +174,53 @@ def manage_crew(crew_name):
     crew_dir = os.path.join(os.path.dirname(__file__), CREWS_DIR, crew_name)
     
     if request.method == 'POST':
-        try:
-            # Check if the crew folder already exists
+        # Check if the request contains a new name
+        data = request.json
+        if data and "new_name" in data:
+            new_name = data["new_name"]
+            new_crew_dir = os.path.join(os.path.dirname(__file__), CREWS_DIR, new_name)
+
+            # Rename the crew directory
             if os.path.exists(crew_dir):
-                return jsonify({"error": f"Crew '{crew_name}' already exists"}), 409
-                
-            # Create crew directory
-            os.makedirs(crew_dir)
+                os.rename(crew_dir, new_crew_dir)
+                return jsonify({"message": f"Crew renamed to '{new_name}' successfully"}), 200
+            else:
+                return jsonify({"error": f"Crew '{crew_name}' not found"}), 404
+
+        # Check if the crew folder already exists
+        if os.path.exists(crew_dir):
+            return jsonify({"error": f"Crew '{crew_name}' already exists"}), 409
             
-            # Create empty template files with proper structure
-            
-            # Create empty process.yaml
-            process_data = {
-                "crew": {
-                    "process": "",
-                    "agents": [],
-                    "tasks": []
-                }
+        # Create crew directory
+        os.makedirs(crew_dir)
+        
+        # Create empty template files with proper structure
+        
+        # Create empty process.yaml
+        process_data = {
+            "crew": {
+                "process": "",
+                "agents": [],
+                "tasks": []
             }
-            with open(os.path.join(crew_dir, 'process.yaml'), 'w') as f:
-                yaml.dump(process_data, f, default_flow_style=False)
+        }
+        with open(os.path.join(crew_dir, 'process.yaml'), 'w') as f:
+            yaml.dump(process_data, f, default_flow_style=False)
+        
+        # Create empty agents.yaml
+        agents_data = {}
+        with open(os.path.join(crew_dir, 'agents.yaml'), 'w') as f:
+            yaml.dump(agents_data, f, default_flow_style=False)
+        
+        # Create empty tasks.yaml
+        tasks_data = {}
+        with open(os.path.join(crew_dir, 'tasks.yaml'), 'w') as f:
+            yaml.dump(tasks_data, f, default_flow_style=False)
             
-            # Create empty agents.yaml
-            agents_data = {}
-            with open(os.path.join(crew_dir, 'agents.yaml'), 'w') as f:
-                yaml.dump(agents_data, f, default_flow_style=False)
-            
-            # Create empty tasks.yaml
-            tasks_data = {}
-            with open(os.path.join(crew_dir, 'tasks.yaml'), 'w') as f:
-                yaml.dump(tasks_data, f, default_flow_style=False)
-                
-            return jsonify({
-                "message": f"Crew '{crew_name}' created successfully",
-                "name": crew_name
-            }), 201
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
+        return jsonify({
+            "message": f"Crew '{crew_name}' created successfully",
+            "name": crew_name
+        }), 201
     
     elif request.method == 'DELETE':
         try:
@@ -324,6 +335,48 @@ def provide_input(crew_name):
         return jsonify({"message": "Input received"})
     else:
         return jsonify({"error": "Invalid or expired input ID"}), 404
+
+@app.route('/api/crew/<crew_name>/rename', methods=['POST'], strict_slashes=False)
+def rename_crew(crew_name):
+    """Endpoint to rename a crew."""
+    try:
+        data = request.json
+        if not data or "new_name" not in data:
+            return jsonify({"error": "Missing 'new_name' field"}), 400
+            
+        new_name = data["new_name"]
+        
+        # Validate new name
+        if not new_name or not new_name.strip():
+            return jsonify({"error": "Crew name cannot be empty"}), 400
+            
+        # Check if name contains only allowed characters
+        if not re.match(r'^[a-zA-Z0-9_]+$', new_name):
+            return jsonify({"error": "Crew name can only contain letters, numbers, and underscores"}), 400
+        
+        # Check if new name already exists
+        crews_path = os.path.join(os.path.dirname(__file__), CREWS_DIR)
+        if os.path.exists(os.path.join(crews_path, new_name)):
+            return jsonify({"error": f"A crew named '{new_name}' already exists"}), 409
+            
+        # Get the paths of the old and new crew directories
+        old_crew_dir = os.path.join(crews_path, crew_name)
+        new_crew_dir = os.path.join(crews_path, new_name)
+        
+        # Check if the old crew exists
+        if not os.path.exists(old_crew_dir):
+            return jsonify({"error": f"Crew '{crew_name}' not found"}), 404
+            
+        # Rename the crew directory
+        os.rename(old_crew_dir, new_crew_dir)
+        
+        return jsonify({
+            "message": f"Crew renamed from '{crew_name}' to '{new_name}' successfully",
+            "old_name": crew_name,
+            "new_name": new_name
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True, port=3002)
