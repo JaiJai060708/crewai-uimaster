@@ -32,13 +32,19 @@ def run_crewai(process, agents, tasks, input_args, log_queue):
                     elif tool == 'ScrapeWebsiteTool':
                         tools.append(ScrapeWebsiteTool())
                     elif tool == 'HumanInputTool':
-                        tools.append(HumanInputTool(log_queue))  
+                        tools.append(HumanInputTool(log_queue))
+
+            allow_delegation = agent_info.get('allow_delegation', False)
+            if allow_delegation:
+                allow_delegation = True
+            else:
+                allow_delegation = False
 
             agent = Agent(
                 role=agent_info.get('role', ''),
                 goal=agent_info.get('goal', ''),
                 backstory=agent_info.get('backstory', ''),
-                allow_delegation=agent_info.get('allow_delegation', False),
+                allow_delegation=allow_delegation,
                 tools=tools,
                 llm=agent_info.get('llm_model', 'gpt-4o-mini')
             )
@@ -49,7 +55,7 @@ def run_crewai(process, agents, tasks, input_args, log_queue):
     for task_id, task_info in tasks.items():
         if task_id in process.get('crew', {}).get('tasks', []):
             description = task_info.get('description', '')
-            max_retries = task_info.get('max_iterations', 2)
+            max_retries = int(task_info.get('max_iterations', 2))
             if description:
                 try:
                     description = description.format(**input_args)
