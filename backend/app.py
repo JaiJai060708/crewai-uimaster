@@ -14,6 +14,7 @@ from crewai_helpers import run_crewai
 app = Flask(__name__)
 
 CREWS_DIR = "crews_yaml_files"
+CONFIG_DIR = "config"
 
 # if the folder crews does not exist, create it
 if not os.path.exists(os.path.join(os.path.dirname(__file__), CREWS_DIR)):
@@ -26,7 +27,7 @@ def home():
 @app.route('/api/tools', methods=['GET'], strict_slashes=False)
 def list_tools():
     try:
-        tools_path = os.path.join(os.path.dirname(__file__), 'config', 'crewai_tools_config.json')
+        tools_path = os.path.join(os.path.dirname(__file__), CONFIG_DIR, 'crewai_tools_config.json')
         with open(tools_path, 'r') as f:
             tools_data = json.load(f)
         return jsonify(tools_data)
@@ -36,7 +37,7 @@ def list_tools():
 @app.route('/api/models', methods=['GET'], strict_slashes=False)
 def list_models():
     try:
-        models_path = os.path.join(os.path.dirname(__file__), 'config', 'crewai_models_config.json')
+        models_path = os.path.join(os.path.dirname(__file__), CONFIG_DIR, 'crewai_models_config.json')
         with open(models_path, 'r') as f:
             models_data = json.load(f)
         return jsonify(models_data)
@@ -179,6 +180,7 @@ def crew_process(crew_name):
 
 @app.route('/api/crew/<crew_name>', methods=['POST', 'DELETE'], strict_slashes=False)
 def manage_crew(crew_name):
+    print(f"Managing crew: {crew_name}")
     crew_dir = os.path.join(os.path.dirname(__file__), CREWS_DIR, crew_name)
     
     if request.method == 'POST':

@@ -22,6 +22,6 @@
           "prompt": "A string specifying the message to display when requesting user input."
         },
         "expected_output": "The user's input as a string."
-      }
-  ]
+    }
+]
   
